@@ -1,0 +1,129 @@
+{
+    "configurations": [
+        {
+            "MIMode": "gdb",
+            "cwd": "${workspaceFolder}",
+            "externalConsole": false,
+            "name": "comp: build",
+            "preLaunchTask": "comp",
+            "program": "${workspaceFolder}/bin/compiler.exe",
+            "request": "launch",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "ignoreFailures": false,
+                    "text": "-enable-pretty-printing"
+                }
+            ],
+            "stopAtEntry": false,
+            "type": "cppdbg",
+            "windows": {
+                "miDebuggerPath": "C:/raylib/w64devkit\\bin\\gdb.exe"
+            }
+        },
+        {
+            "MIMode": "gdb",
+            "cwd": "${workspaceFolder}",
+            "externalConsole": false,
+            "name": "comp: run",
+            "program": "${workspaceFolder}/bin/compiler.exe",
+            "request": "launch",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "ignoreFailures": false,
+                    "text": "-enable-pretty-printing"
+                }
+            ],
+            "stopAtEntry": false,
+            "type": "cppdbg",
+            "windows": {
+                "miDebuggerPath": "C:/raylib/w64devkit\\bin\\gdb.exe"
+            },
+			"args": ["test.lua"]
+        },
+        {
+            "MIMode": "gdb",
+            "cwd": "${workspaceFolder}",
+            "externalConsole": false,
+            "name": "link: build",
+            "preLaunchTask": "link",
+            "program": "${workspaceFolder}/bin/linker.exe",
+            "request": "launch",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "ignoreFailures": false,
+                    "text": "-enable-pretty-printing"
+                }
+            ],
+            "stopAtEntry": false,
+            "type": "cppdbg",
+            "windows": {
+                "miDebuggerPath": "C:/raylib/w64devkit\\bin\\gdb.exe"
+            }
+        },
+        {
+            "MIMode": "gdb",
+            "cwd": "${workspaceFolder}",
+            "externalConsole": false,
+            "name": "link: run",
+            "program": "${workspaceFolder}/bin/linker.exe",
+            "request": "launch",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "ignoreFailures": false,
+                    "text": "-enable-pretty-printing"
+                }
+            ],
+            "stopAtEntry": false,
+            "type": "cppdbg",
+            "windows": {
+                "miDebuggerPath": "C:/raylib/w64devkit\\bin\\gdb.exe"
+            }
+        },
+        {
+            "MIMode": "gdb",
+            "cwd": "${workspaceFolder}",
+            "externalConsole": false,
+            "name": "run: build",
+            "preLaunchTask": "run",
+            "program": "${workspaceFolder}/bin/runtime.exe",
+            "request": "launch",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "ignoreFailures": false,
+                    "text": "-enable-pretty-printing"
+                }
+            ],
+            "stopAtEntry": false,
+            "type": "cppdbg",
+            "windows": {
+                "miDebuggerPath": "C:/raylib/w64devkit\\bin\\gdb.exe"
+            }
+        },
+        {
+            "MIMode": "gdb",
+            "cwd": "${workspaceFolder}",
+            "externalConsole": false,
+            "name": "run: run",
+            "program": "${workspaceFolder}/bin/runtime.exe",
+            "request": "launch",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "ignoreFailures": false,
+                    "text": "-enable-pretty-printing"
+                }
+            ],
+            "stopAtEntry": false,
+            "type": "cppdbg",
+            "windows": {
+                "miDebuggerPath": "C:/raylib/w64devkit\\bin\\gdb.exe"
+            }
+        }
+    ],
+    "version": "0.2.0"
+}

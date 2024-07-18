@@ -1,0 +1,34 @@
+{
+	"projects": [
+		{
+			"name": "comp",
+			"build": ["include"],
+			"include": ["include"],
+			"type": "exe",
+			"out": "compiler.exe",
+			"dll": [],
+			"sdll": [],
+			"configs": ["build", "run"]
+		},
+		{
+			"name": "link",
+			"build": ["include"],
+			"include": ["include"],
+			"type": "exe",
+			"out": "linker.exe",
+			"dll": [],
+			"sdll": [],
+			"configs": ["build", "run"]
+		},
+		{
+			"name": "run",
+			"build": ["include"],
+			"include": ["include"],
+			"type": "exe",
+			"out": "runtime.exe",
+			"dll": [],
+			"sdll": [],
+			"configs": ["build", "run"]
+		}
+	]
+}

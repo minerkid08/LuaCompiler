@@ -1,0 +1,77 @@
+{
+    "tasks": [
+        {
+            "args": [
+                "2",
+                "comp\\src",
+                "include",
+                "-o",
+                "${workspaceFolder}\\bin\\compiler.exe",
+                "-I${workspaceFolder}\\include",
+                "-I${workspaceFolder}\\comp\\src",
+                "-L${workspaceFolder}\\bin\\"
+            ],
+            "command": "d:/cppGames/Build.exe",
+            "group": {
+                "kind": "build"
+            },
+            "label": "comp",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "type": "cppbuild"
+        },
+        {
+            "args": [
+                "2",
+                "link\\src",
+                "include",
+                "-o",
+                "${workspaceFolder}\\bin\\linker.exe",
+                "-I${workspaceFolder}\\include",
+                "-I${workspaceFolder}\\link\\src",
+                "-L${workspaceFolder}\\bin\\"
+            ],
+            "command": "d:/cppGames/Build.exe",
+            "group": {
+                "kind": "build"
+            },
+            "label": "link",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "type": "cppbuild"
+        },
+        {
+            "args": [
+                "2",
+                "run\\src",
+                "include",
+                "-o",
+                "${workspaceFolder}\\bin\\runtime.exe",
+                "-I${workspaceFolder}\\include",
+                "-I${workspaceFolder}\\run\\src",
+                "-L${workspaceFolder}\\bin\\"
+            ],
+            "command": "d:/cppGames/Build.exe",
+            "group": {
+                "kind": "build"
+            },
+            "label": "run",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "type": "cppbuild"
+        }
+    ],
+    "version": "2.0.0"
+}
