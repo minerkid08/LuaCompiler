@@ -3,6 +3,7 @@
 
 #include "FileUtils.hpp"
 #include "Stack.hpp"
+#include "Stream.hpp"
 
 int vars[32];
 
@@ -12,21 +13,19 @@ struct Var
 	int value;
 };
 
-char* input = nullptr;
-
-int i = 0;
+Stream<char> input;
 
 Var readToken()
 {
-	unsigned char type = input[++i];
+	unsigned char type = input.consume();
 	if (type == 0)
 	{
-		char id = input[++i];
+		char id = input.consume();
 		return {id, 0};
 	}
 	if (type == 1)
 	{
-		int num = readInt(i, input);
+		int num = readInt(input.i, input.getPtr());
 		return {-1, num};
 	}
 	if (type == 2)
@@ -35,7 +34,7 @@ Var readToken()
 	}
 	if (type == 3)
 	{
-		char data = input[++i];
+		char data = input.consume();
 		return {-4, data};
 	}
 	return {-2, 0};
@@ -63,9 +62,9 @@ int parseExpr(Var v = {-2, 0})
 				vars2.push_back(v);
 			else
 				vars2.push_back({-1, parseExpr(v)});
-			if ((unsigned char)input[i + 1] == 255)
+			if ((unsigned char)input.get(1) == 255)
 			{
-				i++;
+        input.consume();
 				break;
 			}
 		}
@@ -117,23 +116,27 @@ int main(int argc, const char** argv)
 	fseek(file, 0, SEEK_END);
 	int size = ftell(file);
 	rewind(file);
-	input = new char[size];
-	fread(input, 1, size, file);
+	char* input2 = new char[size + 1];
+	fread(input2, 1, size, file);
+  input2[size] = 0;
 	fclose(file);
 
-	i = -1;
-	while (i < size)
+  input.setPtr(input2);
+
+  input.consume(-1);
+
+	while (input.get(1) != 0)
 	{
-		char c = input[++i];
+		char c = input.consume();
 		if (c == 1)
 		{
-			unsigned char id = input[++i];
+			unsigned char id = input.consume();
 			vars[id] = parseExpr();
 		}
 		else if (c == 3)
 		{
-			unsigned char id = input[++i];
-			unsigned char argc = input[++i];
+			unsigned char id = input.consume();
+			unsigned char argc = input.consume();
 			std::vector<int> args;
 			for (int j = 0; j < argc; j++)
 			{
@@ -146,16 +149,15 @@ int main(int argc, const char** argv)
 		}
 		else if (c == 4)
 		{
-			unsigned char id = input[++i];
+			unsigned char id = input.consume();
 			vars[id] = parseExpr();
 		}
 		else if (c == 5)
 		{
-			int newI = readInt(i, input);
+			int newI = readInt(input.i, input.getPtr());
 			if (parseExpr() == 0)
 			{
-				i = newI;
-				i--;
+				input.i = newI - 1;
 			}
 		}
 	}

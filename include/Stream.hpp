@@ -3,6 +3,7 @@
 template <typename T> class Stream
 {
   public:
+	int i = 0;
 	Stream()
 	{
 	}
@@ -30,8 +31,11 @@ template <typename T> class Stream
 	{
 		i += num;
 	}
+	const T* getPtr()
+	{
+		return ptr;
+	}
 
   private:
 	T* ptr;
-	int i = 0;
 };
