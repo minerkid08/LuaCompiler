@@ -5,9 +5,7 @@
 #include "Stack.hpp"
 #include "Token.hpp"
 
-char* input;
-
-int i;
+Stream<char> input;
 
 Stack<int> labels;
 
@@ -18,23 +16,24 @@ int currentMarkerIndex = 0;
 
 void parseExpr(FILE* file)
 {
-	if (input[i + 1] == 2)
+	char id = input.get(1);
+	if (id == 2)
 	{
-		i++;
+		input.consume();
 		fputc(2, file);
 		unsigned char g = 0;
 		while (g != 255)
 		{
 			parseExpr(file);
-			g = input[i + 1];
+			g = input.get(1);
 		}
-		i++;
+		input.consume();
 		fputc(255, file);
 		return;
 	}
-	if (input[i + 1] == 1 || input[i + 1] == 0 || input[i + 1] == 3)
+	if (id == 1 || id == 0 || id == 3)
 	{
-		Token t = readToken(i, input);
+		Token t = readToken(input);
 		writeToken(t, vars, file);
 	}
 }
@@ -45,27 +44,31 @@ int main(int argc, const char** argv)
 	fseek(file, 0, SEEK_END);
 	int size = ftell(file);
 	rewind(file);
-	input = new char[size];
-	fread(input, 1, size, file);
+	char* input2 = new char[size + 1];
+	fread(input2, 1, size, file);
+	input2[size] = '\0';
 	fclose(file);
+
+	input.setPtr(input2);
 
 	file = fopen("out.o", "wb");
 
 	int varIndex = 0;
 	int funcIndex = 0;
 
-	i = -1;
-	while (i < size)
+	input.consume(-1);
+
+	while (input.get(1) != 0)
 	{
-		char c = input[++i];
+		char c = input.consume();
 		if (c == 1)
 		{
-			c = input[++i];
+			c = input.consume();
 			std::string name;
 			while (c != 0)
 			{
 				name += c;
-				c = input[++i];
+				c = input.consume();
 			}
 			fputc(1, file);
 			fputc(varIndex, file);
@@ -73,14 +76,24 @@ int main(int argc, const char** argv)
 			vars[name] = varIndex;
 			varIndex++;
 		}
-		if (c == 3)
+		if (c == 2)
 		{
-			c = input[++i];
+			c = input.consume();
 			std::string name;
 			while (c != 0)
 			{
 				name += c;
-				c = input[++i];
+				c = input.consume();
+			}
+		}
+		if (c == 3)
+		{
+			c = input.consume();
+			std::string name;
+			while (c != 0)
+			{
+				name += c;
+				c = input.consume();
 			}
 			fputc(3, file);
 			int id;
@@ -92,23 +105,21 @@ int main(int argc, const char** argv)
 				id = funcIndex++;
 			}
 			fputc(id, file);
-			unsigned char argc = input[++i];
+			unsigned char argc = input.consume();
 			fputc(argc, file);
-			int j = 0;
-			while (j < argc)
+			for (int j = 0; j < argc; j++)
 			{
 				parseExpr(file);
-				j++;
 			}
 		}
 		else if (c == 4)
 		{
-			c = input[++i];
+			c = input.consume();
 			std::string name;
 			while (c != 0)
 			{
 				name += c;
-				c = input[++i];
+				c = input.consume();
 			}
 			int ind = vars[name];
 			fputc(4, file);

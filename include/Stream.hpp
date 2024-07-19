@@ -3,17 +3,28 @@
 template <typename T> class Stream
 {
   public:
+	Stream()
+	{
+	}
 	Stream(T* ptr2)
 	{
 		ptr = ptr2;
 	}
 	~Stream()
 	{
-		return ptr;
+		delete[] ptr;
 	}
-	const T& get(int offset)
+	void setPtr(T* ptr2)
+	{
+		ptr = ptr2;
+	}
+	const T& get(int offset = 0)
 	{
 		return ptr[i + offset];
+	}
+	const T& consume()
+	{
+		return ptr[++i];
 	}
 	void consume(int num)
 	{
