@@ -1,9 +1,12 @@
+#include "Variable.hpp"
+#include "dlfcn.hpp"
 #include <iostream>
 #include <vector>
 
 #include "FileUtils.hpp"
 #include "Stack.hpp"
 #include "Stream.hpp"
+#include "Utils.hpp"
 
 int vars[32];
 
@@ -15,6 +18,8 @@ struct Var
 
 Stream<char> input;
 
+typedef void (*Fun1Arg)(const Variable& var);
+
 Var readToken()
 {
 	unsigned char type = input.consume();
@@ -25,7 +30,7 @@ Var readToken()
 	}
 	if (type == 1)
 	{
-		int num = readInt(input.i, input.getPtr());
+		int num = readInt(input);
 		return {-1, num};
 	}
 	if (type == 2)
@@ -64,7 +69,7 @@ int parseExpr(Var v = {-2, 0})
 				vars2.push_back({-1, parseExpr(v)});
 			if ((unsigned char)input.get(1) == 255)
 			{
-        input.consume();
+				input.consume();
 				break;
 			}
 		}
@@ -118,12 +123,51 @@ int main(int argc, const char** argv)
 	rewind(file);
 	char* input2 = new char[size + 1];
 	fread(input2, 1, size, file);
-  input2[size] = 0;
+	input2[size] = 0;
 	fclose(file);
 
-  input.setPtr(input2);
+	input.setPtr(input2);
 
-  input.consume(-1);
+	input.consume(-1);
+
+	int headerAddr = readInt(input);
+
+	input.i = headerAddr - 1;
+
+	std::vector<std::string> loadedLibs;
+	std::vector<void*> libFunctions;
+	std::vector<void*> dllData;
+
+	while (input.get(1) != 0)
+	{
+		std::string name = readString(input);
+		std::string dllName = name.substr(name.find(' ') + 1);
+		std::string funName = name.substr(0, name.find(' '));
+		if (!vecContains(loadedLibs, dllName))
+		{
+			dllData.push_back(dlopen((dllName + ".dll").c_str(), 0));
+      loadedLibs.push_back(dllName);
+      if(dllData[dllData.size() - 1] == nullptr)
+        err("could not load " + dllName + ".dll");
+		}
+		int loadedLibInd;
+		for (int i = 0; i < loadedLibs.size(); i++)
+		{
+			if (loadedLibs[i] == dllName)
+			{
+				loadedLibInd = i;
+				break;
+			}
+		}
+		input.consume();
+		libFunctions.push_back(dlsym(dllData[loadedLibInd], funName.c_str()));
+    if(libFunctions[libFunctions.size() - 1] == nullptr)
+      err("could not load fun " + funName);
+	}
+
+	input.i = 3;
+
+	std::cout << "running code\n";
 
 	while (input.get(1) != 0)
 	{
@@ -142,9 +186,11 @@ int main(int argc, const char** argv)
 			{
 				args.push_back(parseExpr());
 			}
-			if (id == 0)
+			if (argc == 1)
 			{
-				std::cout << args[0] << "\n";
+				Fun1Arg fun = reinterpret_cast<Fun1Arg>(libFunctions[id]);
+				Variable v(args[0]);
+				fun(v);
 			}
 		}
 		else if (c == 4)

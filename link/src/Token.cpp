@@ -2,7 +2,7 @@
 
 #include "FileUtils.hpp"
 
-#include <unordered_map>
+#include "Stack.hpp"
 
 Token readToken(Stream<char>& data)
 {
@@ -38,12 +38,18 @@ Token readToken(Stream<char>& data)
 	return {TokenType::Null, ""};
 }
 
-void writeToken(const Token& t, std::unordered_map<std::string, char>& vars, FILE* file)
+void writeToken(const Token& t, Stack<std::string>& vars, FILE* file)
 {
 	if (t.type == TokenType::Text)
 	{
 		fputc(0, file);
-		fputc(vars[t.data], file);
+		for (char i = 0; i < vars.size(); i++)
+		{
+			if (vars[i] == t.data)
+			{
+				fputc(i, file);
+			}
+		}
 	}
 	else if (t.type == TokenType::Number)
 	{

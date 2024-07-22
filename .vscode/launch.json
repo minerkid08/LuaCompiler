@@ -39,8 +39,7 @@
             "type": "cppdbg",
             "windows": {
                 "miDebuggerPath": "C:/raylib/w64devkit\\bin\\gdb.exe"
-            },
-			"args": ["test.lua"]
+            }
         },
         {
             "MIMode": "gdb",
@@ -110,6 +109,27 @@
             "externalConsole": false,
             "name": "run: run",
             "program": "${workspaceFolder}/bin/runtime.exe",
+            "request": "launch",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "ignoreFailures": false,
+                    "text": "-enable-pretty-printing"
+                }
+            ],
+            "stopAtEntry": false,
+            "type": "cppdbg",
+            "windows": {
+                "miDebuggerPath": "C:/raylib/w64devkit\\bin\\gdb.exe"
+            }
+        },
+        {
+            "MIMode": "gdb",
+            "cwd": "${workspaceFolder}",
+            "externalConsole": false,
+            "name": "stdlib: build",
+            "preLaunchTask": "stdlib",
+            "program": "${workspaceFolder}/bin/..\\stdlib.dll",
             "request": "launch",
             "setupCommands": [
                 {

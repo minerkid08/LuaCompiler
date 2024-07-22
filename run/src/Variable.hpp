@@ -2,11 +2,23 @@
 
 enum class VarType
 {
-  Number
+	Number
 };
 
 struct Variable
 {
-  VarType type;
-  int data;
+	VarType type;
+	int data;
+	Variable()
+	{
+	}
+	Variable(int n)
+	{
+		data = n;
+	}
+	Variable(VarType t, int n)
+	{
+		type = t;
+		data = n;
+	}
 };

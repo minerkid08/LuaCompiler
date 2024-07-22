@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-#include <unordered_map>
+#include "Stack.hpp"
 
 #include "Stream.hpp"
 
@@ -19,4 +19,4 @@ struct Token
 };
 
 Token readToken(Stream<char>& t);
-void writeToken(const Token& t, std::unordered_map<std::string, char>& vars, FILE* file);
+void writeToken(const Token& t, Stack<std::string>& vars, FILE* file);

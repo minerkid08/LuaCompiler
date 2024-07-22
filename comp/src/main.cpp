@@ -6,6 +6,7 @@
 #include "Token.hpp"
 #include "Tokenizer.hpp"
 #include "Utils.hpp"
+#include "FileUtils.hpp"
 
 #include <iostream>
 
@@ -165,7 +166,7 @@ void parseExpr(std::vector<std::string>& endOfArgTokens)
 			}
 		}
 		writeToken(*token, file);
-    tokens.consume();
+		tokens.consume();
 	}
 	else
 	{
@@ -184,8 +185,9 @@ void parseExpr(std::vector<std::string>& endOfArgTokens)
 				nestedLevel++;
 			else if (*token == TokenType::CloseParan)
 				nestedLevel--;
-			token = tokens.get(i++);
+			token = tokens.get(size);
 		}
+    size--;
 		for (int i2 = 0; i2 < i; i2++)
 		{
 			token = tokens.get(i2);
@@ -245,9 +247,10 @@ void parseFunctionCall()
 	std::vector<std::string> endOfArgTokens = {",", ")"};
 	for (int k = 0; k < argc; k++)
 	{
+		std::cout << "parsing expr\n";
 		parseExpr(endOfArgTokens);
+		std::cout << "parsed expr\n";
 	}
-	// i = j;
 }
 
 void parseFunction()
@@ -281,15 +284,30 @@ void parseFunction()
 			token = tokens.consume();
 		}
 	}
-	token = tokens.consume();
-	if (*token != "end")
-		err("end expected after function declaration");
 	name = name + ":" + std::to_string(args.size());
-	funcs.push_back(name);
-	char e = 2;
-	std::string str;
-	str += e;
-	str += name;
-	fprintf(file, str.c_str());
-	fputc(0, file);
+	if (!vecContains(funcs, name))
+		funcs.push_back(name);
+	token = tokens.consume();
+  std::cout << "e";
+	if (*token == "end")
+	{
+		fputc(2, file);
+		fputs(name.c_str(), file);
+		fputc(0, file);
+	}
+	else if (*token == "\n")
+	{
+		fputc(7, file);
+    writeString(name, file);
+		fputc(args.size(), file);
+
+		blockVarPop.push(vars.size());
+
+		for (int i = 0; i < args.size(); i++)
+		{
+      writeString(args[i], file);
+		}
+	}
+	else
+		err("end or newline expected after function declaration");
 }

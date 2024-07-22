@@ -11,7 +11,7 @@
                 "-I${workspaceFolder}\\comp\\src",
                 "-L${workspaceFolder}\\bin\\"
             ],
-            "command": "d:/cppGames/Build.exe",
+            "command": "D:/cppGames/Build.exe",
             "group": {
                 "kind": "build"
             },
@@ -33,9 +33,11 @@
                 "${workspaceFolder}\\bin\\linker.exe",
                 "-I${workspaceFolder}\\include",
                 "-I${workspaceFolder}\\link\\src",
+                "-lDbghelp",
+                "-lImagehlp",
                 "-L${workspaceFolder}\\bin\\"
             ],
-            "command": "d:/cppGames/Build.exe",
+            "command": "D:/cppGames/Build.exe",
             "group": {
                 "kind": "build"
             },
@@ -59,11 +61,36 @@
                 "-I${workspaceFolder}\\run\\src",
                 "-L${workspaceFolder}\\bin\\"
             ],
-            "command": "d:/cppGames/Build.exe",
+            "command": "D:/cppGames/Build.exe",
             "group": {
                 "kind": "build"
             },
             "label": "run",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "type": "cppbuild"
+        },
+        {
+            "args": [
+                "2",
+                "stdlib\\src",
+                "include",
+                "-shared",
+                "-o",
+                "${workspaceFolder}\\bin\\..\\stdlib.dll",
+                "-I${workspaceFolder}\\include",
+                "-I${workspaceFolder}\\stdlib\\src",
+                "-L${workspaceFolder}\\bin\\"
+            ],
+            "command": "D:/cppGames/Build.exe",
+            "group": {
+                "kind": "build"
+            },
+            "label": "stdlib",
             "options": {
                 "cwd": "${workspaceFolder}"
             },

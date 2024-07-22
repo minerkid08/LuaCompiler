@@ -17,7 +17,7 @@
 			"type": "exe",
 			"out": "linker.exe",
 			"dll": [],
-			"sdll": [],
+			"sdll": ["Dbghelp", "Imagehlp"],
 			"configs": ["build", "run"]
 		},
 		{
@@ -29,6 +29,16 @@
 			"dll": [],
 			"sdll": [],
 			"configs": ["build", "run"]
+		},
+		{
+			"name": "stdlib",
+			"build": ["include"],
+			"include": ["include"],
+			"type": "dll",
+			"out": "..\\stdlib.dll",
+			dll": [],
+			"sdll": [],
+			"configs": ["build"]
 		}
 	]
 }
