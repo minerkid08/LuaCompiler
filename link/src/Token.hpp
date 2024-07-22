@@ -19,4 +19,4 @@ struct Token
 };
 
 Token readToken(Stream<char>& t);
-void writeToken(const Token& t, Stack<std::string>& vars, FILE* file);
+void writeToken(const Token& t, Stack<std::string>& globalVars, Stack<std::string>& localVars, FILE* file);

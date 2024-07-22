@@ -37,13 +37,19 @@ struct FunctionMarker
 
 Stack<LabelElement> labels;
 
-Stack<std::string> vars;
-Stack<int> varInds;
+Stack<std::string> globalVars;
+Stack<int> globalVarInds;
+
+Stack<std::string> localVars;
+Stack<int> localVarsInds;
+
+Stack<std::string>* vars = &globalVars;
+Stack<int>* varInds = &globalVarInds;
 
 Stream<char> input;
 
 std::unordered_map<std::string, std::vector<FunctionMarker>> funcs;
-
+std::unordered_map<std::string, std::vector<std::string>> funcArgs;
 int currentMarkerIndex = 0;
 
 void parseExpr(FILE* file)
@@ -66,8 +72,28 @@ void parseExpr(FILE* file)
 	if (id == 1 || id == 0 || id == 3)
 	{
 		Token t = readToken(input);
-		writeToken(t, vars, file);
+		writeToken(t, globalVars, localVars, file);
 	}
+}
+
+void setVariable(const std::string& name, FILE* file)
+{
+	vars->push(name);
+	fputc(1, file);
+	if (vars == &localVars)
+		fputc(1, file);
+	else
+		fputc(2, file);
+	fputc(vars->size() - 1, file);
+	parseExpr(file);
+}
+
+void setFunVariable(const std::string& name, char id, FILE* file)
+{
+	fputc(1, file);
+	fputc(1, file);
+	fputc(id, file);
+	parseExpr(file);
 }
 
 int main(int argc, const char** argv)
@@ -89,7 +115,6 @@ int main(int argc, const char** argv)
 
 	file = fopen("out.o", "wb");
 
-	int varIndex = 0;
 	int funcIndex = 0;
 
 	input.consume(-1);
@@ -100,19 +125,25 @@ int main(int argc, const char** argv)
 		if (c == 1)
 		{
 			std::string name = readString(input);
-			fputc(1, file);
-			fputc(varIndex, file);
-			parseExpr(file);
-			vars.push(name);
-			varIndex++;
+			setVariable(name, file);
 		}
 		if (c == 2)
 		{
-			readString(input);
+			std::string name = readString(input);
+			name = name.substr(0, name.find(':'));
+			char argc = input.consume();
+			if (funcArgs.find(name) == funcArgs.end())
+				funcArgs[name] = {};
+			std::vector<std::string>* args = &(funcArgs[name]);
+			for (int i = 0; i < argc; i++)
+			{
+				std::string arg = readString(input);
+				args->push_back(arg);
+			}
 		}
 		if (c == 3)
 		{
-			varInds.push(vars.size());
+			varInds->push(vars->size());
 			std::string name = readString(input);
 			name = name.substr(0, name.find(':'));
 			bool native = false;
@@ -147,21 +178,27 @@ int main(int argc, const char** argv)
 				FunctionMarker marker = {FunctionMarkerType::Usage, ftell(file)};
 				funcs[name].push_back(marker);
 				writeInt(0, file);
+				long long addr = ftell(file);
+				writeInt(0, file);
 				unsigned char argc = input.consume();
-				fputc(argc, file);
+				std::vector<std::string>* args = &(funcArgs[name]);
 				for (int j = 0; j < argc; j++)
 				{
-					parseExpr(file);
+					setFunVariable((*args)[j], j, file);
 				}
+				long long top = ftell(file);
+				fsetpos(file, &addr);
+				writeInt(top, file);
+				fsetpos(file, &top);
 			}
 		}
 		else if (c == 4)
 		{
 			std::string name = readString(input);
 			char ind = 0;
-			for (int i = 0; i < vars.size(); i++)
+			for (int i = 0; i < vars->size(); i++)
 			{
-				if (vars[i] == name)
+				if ((*vars)[i] == name)
 				{
 					ind = i;
 				}
@@ -179,11 +216,11 @@ int main(int argc, const char** argv)
 		}
 		else if (c == 6)
 		{
-			vars.popTo(varInds.top());
-			varInds.pop();
 			LabelElement elem = labels.top();
 			if (elem.type == LabelType::If)
 			{
+				vars->popTo(varInds->top());
+				varInds->pop();
 				long long j = elem.pos;
 				long long currentPos = ftell(file);
 				fsetpos(file, &j);
@@ -193,12 +230,18 @@ int main(int argc, const char** argv)
 			else if (elem.type == LabelType::Function)
 			{
 				fputc(8, file);
+				vars->popTo(0);
+				varInds->popTo(0);
+				vars = &globalVars;
+				varInds = &globalVarInds;
 			}
 			labels.pop();
 		}
 		else if (c == 7)
 		{
-			varInds.push(vars.size());
+			fputc('i', file);
+			vars = &localVars;
+			varInds = &localVarsInds;
 			std::string name = readString(input);
 			name = name.substr(0, name.find(':'));
 			if (funcs.find(name) == funcs.end())
@@ -210,7 +253,7 @@ int main(int argc, const char** argv)
 			std::vector<std::string> args;
 			for (int i = 0; i < argc; i++)
 			{
-				args.push_back(readString(input));
+				vars->push(readString(input));
 			}
 		}
 	}
@@ -221,11 +264,10 @@ int main(int argc, const char** argv)
 
 	for (auto& [funcName, refs] : funcs)
 	{
-		std::cout << refs.size() << '\n';
+		std::cout << funcName << '\n';
 		for (FunctionMarker marker : refs)
 		{
-			std::cout << funcName << ": " << (marker.type == FunctionMarkerType::Usage ? "usage" : "definition") << ", "
-					  << marker.pos << '\n';
+			std::cout << (marker.type == FunctionMarkerType::Definition ? "definition\n" : "usage\n");
 		}
 	}
 

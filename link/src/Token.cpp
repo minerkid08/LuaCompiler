@@ -38,16 +38,32 @@ Token readToken(Stream<char>& data)
 	return {TokenType::Null, ""};
 }
 
-void writeToken(const Token& t, Stack<std::string>& vars, FILE* file)
+void writeToken(const Token& t, Stack<std::string>& globalVars, Stack<std::string>& localVars, FILE* file)
 {
 	if (t.type == TokenType::Text)
 	{
-		fputc(0, file);
-		for (char i = 0; i < vars.size(); i++)
+		if (globalVars.contains(t.data))
 		{
-			if (vars[i] == t.data)
+			fputc(0, file);
+			for (char i = 0; i < globalVars.size(); i++)
 			{
-				fputc(i, file);
+				if (globalVars[i] == t.data)
+				{
+					fputc(i, file);
+          break;
+				}
+			}
+		}
+		else
+		{
+			fputc(4, file);
+			for (char i = 0; i < localVars.size(); i++)
+			{
+				if (localVars[i] == t.data)
+				{
+					fputc(i, file);
+          break;
+				}
 			}
 		}
 	}

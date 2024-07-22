@@ -1,12 +1,12 @@
 #include <vector>
 
 #include "EvalExpr.hpp"
+#include "FileUtils.hpp"
 #include "Stack.hpp"
 #include "StreamVec.hpp"
 #include "Token.hpp"
 #include "Tokenizer.hpp"
 #include "Utils.hpp"
-#include "FileUtils.hpp"
 
 #include <iostream>
 
@@ -187,7 +187,7 @@ void parseExpr(std::vector<std::string>& endOfArgTokens)
 				nestedLevel--;
 			token = tokens.get(size);
 		}
-    size--;
+		size--;
 		for (int i2 = 0; i2 < i; i2++)
 		{
 			token = tokens.get(i2);
@@ -247,9 +247,7 @@ void parseFunctionCall()
 	std::vector<std::string> endOfArgTokens = {",", ")"};
 	for (int k = 0; k < argc; k++)
 	{
-		std::cout << "parsing expr\n";
 		parseExpr(endOfArgTokens);
-		std::cout << "parsed expr\n";
 	}
 }
 
@@ -288,25 +286,20 @@ void parseFunction()
 	if (!vecContains(funcs, name))
 		funcs.push_back(name);
 	token = tokens.consume();
-  std::cout << "e";
 	if (*token == "end")
 	{
 		fputc(2, file);
-		fputs(name.c_str(), file);
-		fputc(0, file);
+		writeString(name, file);
+		fputc(args.size(), file);
+		for (int i = 0; i < args.size(); i++)
+			writeString(args[i], file);
 	}
 	else if (*token == "\n")
 	{
 		fputc(7, file);
-    writeString(name, file);
-		fputc(args.size(), file);
+		writeString(name, file);
 
 		blockVarPop.push(vars.size());
-
-		for (int i = 0; i < args.size(); i++)
-		{
-      writeString(args[i], file);
-		}
 	}
 	else
 		err("end or newline expected after function declaration");
