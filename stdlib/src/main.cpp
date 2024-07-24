@@ -1,4 +1,5 @@
 #include <iostream>
+#include <vector>
 
 #define EXPORT __declspec(dllexport)
 
@@ -15,12 +16,12 @@ struct Variable
 
 extern "C"
 {
-	void EXPORT print(const Variable& var)
+	void EXPORT print(const std::vector<Variable>& vars)
 	{
-		std::cout << var.data;
+		std::cout << vars[0].data;
 	}
-	void EXPORT println(const Variable& var)
+	void EXPORT println(const std::vector<Variable>& vars)
 	{
-		std::cout << var.data << '\n';
+		std::cout << vars[0].data << '\n';
 	}
 }

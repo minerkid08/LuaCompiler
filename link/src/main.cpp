@@ -1,5 +1,4 @@
 #include <cstdio>
-#include <iostream>
 #include <string>
 
 #include "FileUtils.hpp"
@@ -133,12 +132,19 @@ int main(int argc, const char** argv)
 			name = name.substr(0, name.find(':'));
 			char argc = input.consume();
 			if (funcArgs.find(name) == funcArgs.end())
-				funcArgs[name] = {};
-			std::vector<std::string>* args = &(funcArgs[name]);
-			for (int i = 0; i < argc; i++)
 			{
-				std::string arg = readString(input);
-				args->push_back(arg);
+				funcArgs[name] = {};
+				std::vector<std::string>* args = &(funcArgs[name]);
+				for (int i = 0; i < argc; i++)
+				{
+					std::string arg = readString(input);
+					args->push_back(arg);
+				}
+			}
+			else
+			{
+				for (int i = 0; i < argc; i++)
+					readString(input);
 			}
 		}
 		if (c == 3)
@@ -195,17 +201,27 @@ int main(int argc, const char** argv)
 		else if (c == 4)
 		{
 			std::string name = readString(input);
-			char ind = 0;
-			for (int i = 0; i < vars->size(); i++)
+			fputc(4, file);
+			for (int i = 0; i < localVars.size(); i++)
 			{
-				if ((*vars)[i] == name)
+				if (localVars[i] == name)
 				{
-					ind = i;
+					fputc(1, file);
+					fputc(i, file);
+					parseExpr(file);
+          continue;
 				}
 			}
-			fputc(4, file);
-			fputc(ind, file);
-			parseExpr(file);
+			for (int i = 0; i < globalVars.size(); i++)
+			{
+				if (globalVars[i] == name)
+				{
+					fputc(2, file);
+					fputc(i, file);
+					parseExpr(file);
+          continue;
+				}
+			}
 		}
 		else if (c == 5)
 		{
@@ -239,7 +255,6 @@ int main(int argc, const char** argv)
 		}
 		else if (c == 7)
 		{
-			fputc('i', file);
 			vars = &localVars;
 			varInds = &localVarsInds;
 			std::string name = readString(input);
@@ -249,11 +264,10 @@ int main(int argc, const char** argv)
 			FunctionMarker marker = {FunctionMarkerType::Definition, ftell(file)};
 			labels.push({LabelType::Function, 4});
 			funcs[name].push_back(marker);
-			char argc = input.consume();
-			std::vector<std::string> args;
-			for (int i = 0; i < argc; i++)
+			std::vector<std::string>& args = funcArgs[name];
+			for (int i = 0; i < args.size(); i++)
 			{
-				vars->push(readString(input));
+				vars->push(args[i]);
 			}
 		}
 	}
@@ -261,15 +275,6 @@ int main(int argc, const char** argv)
 	fputc(0, file);
 
 	long long pos = ftell(file);
-
-	for (auto& [funcName, refs] : funcs)
-	{
-		std::cout << funcName << '\n';
-		for (FunctionMarker marker : refs)
-		{
-			std::cout << (marker.type == FunctionMarkerType::Definition ? "definition\n" : "usage\n");
-		}
-	}
 
 	std::vector<std::string> funcVec;
 	for (auto& [funcName, refs] : funcs)

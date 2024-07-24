@@ -9,6 +9,7 @@
 #include "Utils.hpp"
 
 int vars[32];
+int localVars[32];
 
 struct Var
 {
@@ -16,9 +17,11 @@ struct Var
 	int value;
 };
 
+Stack<int> callStack;
+Stack<int> varOffsets;
 Stream<char> input;
 
-typedef void (*Fun1Arg)(const Variable& var);
+typedef void (*NativeFunc)(const std::vector<Variable>& vars);
 
 Var readToken()
 {
@@ -42,6 +45,11 @@ Var readToken()
 		char data = input.consume();
 		return {-4, data};
 	}
+	if (type == 4)
+	{
+		char id = input.consume();
+		return {-5, id};
+	}
 	return {-2, 0};
 }
 
@@ -56,6 +64,10 @@ int parseExpr(Var v = {-2, 0})
 	if (v.id >= 0)
 	{
 		return vars[v.id];
+	}
+	if (v.id == -5)
+	{
+		return localVars[v.value];
 	}
 	if (v.id == -3)
 	{
@@ -117,6 +129,8 @@ int parseExpr(Var v = {-2, 0})
 
 int main(int argc, const char** argv)
 {
+	varOffsets.push(0);
+
 	FILE* file = fopen(argv[1], "rb");
 	fseek(file, 0, SEEK_END);
 	int size = ftell(file);
@@ -146,9 +160,9 @@ int main(int argc, const char** argv)
 		if (!vecContains(loadedLibs, dllName))
 		{
 			dllData.push_back(dlopen((dllName + ".dll").c_str(), 0));
-      loadedLibs.push_back(dllName);
-      if(dllData[dllData.size() - 1] == nullptr)
-        err("could not load " + dllName + ".dll");
+			loadedLibs.push_back(dllName);
+			if (dllData[dllData.size() - 1] == nullptr)
+				err("could not load " + dllName + ".dll");
 		}
 		int loadedLibInd;
 		for (int i = 0; i < loadedLibs.size(); i++)
@@ -161,8 +175,8 @@ int main(int argc, const char** argv)
 		}
 		input.consume();
 		libFunctions.push_back(dlsym(dllData[loadedLibInd], funName.c_str()));
-    if(libFunctions[libFunctions.size() - 1] == nullptr)
-      err("could not load fun " + funName);
+		if (libFunctions[libFunctions.size() - 1] == nullptr)
+			err("could not load fun " + funName);
 	}
 
 	input.i = 3;
@@ -174,8 +188,12 @@ int main(int argc, const char** argv)
 		char c = input.consume();
 		if (c == 1)
 		{
+			char type = input.consume();
 			unsigned char id = input.consume();
-			vars[id] = parseExpr();
+			if (type == 1)
+				vars[id] = parseExpr();
+			else
+				localVars[id + varOffsets.top()] = parseExpr();
 		}
 		else if (c == 3)
 		{
@@ -188,15 +206,19 @@ int main(int argc, const char** argv)
 			}
 			if (argc == 1)
 			{
-				Fun1Arg fun = reinterpret_cast<Fun1Arg>(libFunctions[id]);
+				NativeFunc fun = reinterpret_cast<NativeFunc>(libFunctions[id]);
 				Variable v(args[0]);
-				fun(v);
+				fun({v});
 			}
 		}
 		else if (c == 4)
 		{
+			char type = input.consume();
 			unsigned char id = input.consume();
-			vars[id] = parseExpr();
+			if (type == 1)
+				vars[id] = parseExpr();
+			else
+				localVars[id + varOffsets.top()] = parseExpr();
 		}
 		else if (c == 5)
 		{
@@ -206,5 +228,9 @@ int main(int argc, const char** argv)
 				input.i = newI - 1;
 			}
 		}
+    else if (c == 6)
+    {
+
+    }
 	}
 }
