@@ -1,6 +1,6 @@
 function dothing(text) end
 function println(text) end
-function exit2(thing) end
+function exit2() end
 local a = 4;
 if a == 4 then
   local b = 5;
@@ -10,7 +10,7 @@ if a == 4 then
   println(a);
 end
 println(a);
-exit2(4);
+exit2();
 
 function dothing(text)
   println(text + 8);

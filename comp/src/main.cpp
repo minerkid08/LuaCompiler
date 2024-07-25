@@ -213,7 +213,7 @@ void parseFunctionCall()
 		err("expected '(' after function name");
 
 	int argc = 0;
-	token = tokens.get();
+	token = tokens.get(1);
 	int j = 1;
 	int nestingLevel = 0;
 	if (*token != TokenType::CloseParan)
@@ -234,6 +234,8 @@ void parseFunctionCall()
 		}
 		argc++;
 	}
+	else
+		j++;
 	token = tokens.get(j);
 	if (!newlineOrSemicolon(token))
 		err("semicolon or newline expected after statement");
@@ -241,7 +243,7 @@ void parseFunctionCall()
 	if (!vecContains(funcs, name))
 		err(std::string("function ") + name + " with " + std::to_string(argc) + " args is not defined");
 	fputc(3, file);
-  writeString(name, file);
+	writeString(name, file);
 	fputc(argc, file);
 	std::vector<std::string> endOfArgTokens = {",", ")"};
 	for (int k = 0; k < argc; k++)

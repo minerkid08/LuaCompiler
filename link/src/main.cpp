@@ -89,8 +89,6 @@ void setVariable(const std::string& name, FILE* file)
 
 void setFunVariable(const std::string& name, char id, FILE* file)
 {
-	fputc(1, file);
-	fputc(1, file);
 	fputc(id, file);
 	parseExpr(file);
 }
@@ -181,21 +179,18 @@ int main(int argc, const char** argv)
 				fputc(3, file);
 				if (funcs.find(name) == funcs.end())
 					funcs[name] = {};
+				char varC = localVars.size();
+				fputc(varC, file);
 				FunctionMarker marker = {FunctionMarkerType::Usage, ftell(file)};
 				funcs[name].push_back(marker);
 				writeInt(0, file);
-				long long addr = ftell(file);
-				writeInt(0, file);
 				unsigned char argc = input.consume();
+				fputc(argc, file);
 				std::vector<std::string>* args = &(funcArgs[name]);
 				for (int j = 0; j < argc; j++)
 				{
 					setFunVariable((*args)[j], j, file);
 				}
-				long long top = ftell(file);
-				fsetpos(file, &addr);
-				writeInt(top, file);
-				fsetpos(file, &top);
 			}
 		}
 		else if (c == 4)
@@ -209,7 +204,7 @@ int main(int argc, const char** argv)
 					fputc(1, file);
 					fputc(i, file);
 					parseExpr(file);
-          continue;
+					continue;
 				}
 			}
 			for (int i = 0; i < globalVars.size(); i++)
@@ -219,7 +214,7 @@ int main(int argc, const char** argv)
 					fputc(2, file);
 					fputc(i, file);
 					parseExpr(file);
-          continue;
+					continue;
 				}
 			}
 		}

@@ -1,6 +1,7 @@
 #include "Variable.hpp"
 #include "dlfcn.hpp"
 #include <iostream>
+#include <sstream>
 #include <vector>
 
 #include "FileUtils.hpp"
@@ -11,13 +12,18 @@
 int vars[32];
 int localVars[32];
 
-int localVarCount = 0;
-
 struct Var
 {
 	int id;
 	int value;
 };
+
+std::string intToHex(int i)
+{
+	std::stringstream s;
+	s << std::hex << i;
+	return s.str();
+}
 
 Stack<int> callStack;
 Stack<int> varOffsets;
@@ -178,12 +184,10 @@ int main(int argc, const char** argv)
 		input.consume();
 		libFunctions.push_back(dlsym(dllData[loadedLibInd], funName.c_str()));
 		if (libFunctions[libFunctions.size() - 1] == nullptr)
-			err("could not load fun " + funName);
+			err("could not load fun \'" + funName + '\'');
 	}
 
 	input.i = 3;
-
-	std::cout << "running code\n";
 
 	while (input.get(1) != 0)
 	{
@@ -192,32 +196,36 @@ int main(int argc, const char** argv)
 		{
 			char type = input.consume();
 			unsigned char id = input.consume();
-			if (type == 1)
+			if (type == 2)
+			{
 				vars[id] = parseExpr();
+			}
 			else
+			{
 				localVars[id + varOffsets.top()] = parseExpr();
+			}
 		}
 		else if (c == 9)
 		{
 			unsigned char id = input.consume();
 			unsigned char argc = input.consume();
-			std::vector<int> args;
-			for (int j = 0; j < argc; j++)
+			std::vector<Variable> args;
+			std::cout << argc << '\n';
+			if (argc > 0)
 			{
-				args.push_back(parseExpr());
+				for (int j = 0; j < argc; j++)
+				{
+					args.push_back(parseExpr());
+				}
 			}
-			if (argc == 1)
-			{
-				NativeFunc fun = reinterpret_cast<NativeFunc>(libFunctions[id]);
-				Variable v(args[0]);
-				fun({v});
-			}
+			NativeFunc fun = reinterpret_cast<NativeFunc>(libFunctions[id]);
+			fun(args);
 		}
 		else if (c == 4)
 		{
 			char type = input.consume();
 			unsigned char id = input.consume();
-			if (type == 1)
+			if (type == 2)
 				vars[id] = parseExpr();
 			else
 				localVars[id + varOffsets.top()] = parseExpr();
@@ -232,17 +240,23 @@ int main(int argc, const char** argv)
 		}
 		else if (c == 3)
 		{
+			char varC = input.consume();
 			int funcAddr = readInt(input);
-			int rtnAddr = readInt(input);
 			char argc = input.consume();
-			varOffsets.push(localVarCount);
+			varOffsets.push(varC);
 			for (int i = 0; i < argc; i++)
 			{
-				char type = input.consume();
 				unsigned char id = input.consume();
 				localVars[id + varOffsets.top()] = parseExpr();
-				localVarCount++;//somehow decrement when a var goes out of scope or move to compiler
 			}
+			callStack.push(input.i);
+			input.i = funcAddr - 1;
+		}
+		else if (c == 8)
+		{
+			input.i = callStack.top();
+			callStack.pop();
+			varOffsets.pop();
 		}
 	}
 }
