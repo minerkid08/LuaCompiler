@@ -11,6 +11,8 @@
 int vars[32];
 int localVars[32];
 
+int localVarCount = 0;
+
 struct Var
 {
 	int id;
@@ -195,7 +197,7 @@ int main(int argc, const char** argv)
 			else
 				localVars[id + varOffsets.top()] = parseExpr();
 		}
-		else if (c == 3)
+		else if (c == 9)
 		{
 			unsigned char id = input.consume();
 			unsigned char argc = input.consume();
@@ -228,9 +230,19 @@ int main(int argc, const char** argv)
 				input.i = newI - 1;
 			}
 		}
-    else if (c == 6)
-    {
-
-    }
+		else if (c == 3)
+		{
+			int funcAddr = readInt(input);
+			int rtnAddr = readInt(input);
+			char argc = input.consume();
+			varOffsets.push(localVarCount);
+			for (int i = 0; i < argc; i++)
+			{
+				char type = input.consume();
+				unsigned char id = input.consume();
+				localVars[id + varOffsets.top()] = parseExpr();
+				localVarCount++;//somehow decrement when a var goes out of scope or move to compiler
+			}
+		}
 	}
 }

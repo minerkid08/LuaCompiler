@@ -24,4 +24,8 @@ extern "C"
 	{
 		std::cout << vars[0].data << '\n';
 	}
+	void EXPORT exit2(const std::vector<Variable>& vars)
+	{
+		exit(3);
+	}
 }
