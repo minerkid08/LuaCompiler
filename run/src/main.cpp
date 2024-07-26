@@ -210,7 +210,6 @@ int main(int argc, const char** argv)
 			unsigned char id = input.consume();
 			unsigned char argc = input.consume();
 			std::vector<Variable> args;
-			std::cout << argc << '\n';
 			if (argc > 0)
 			{
 				for (int j = 0; j < argc; j++)

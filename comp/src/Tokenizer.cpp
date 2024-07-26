@@ -8,7 +8,8 @@ std::vector<std::string> keywords = {
   "end",
   "if",
   "then",
-  "local"
+  "local",
+  "require"
 };
 
 std::vector<std::string> operators = {
