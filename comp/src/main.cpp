@@ -12,8 +12,6 @@
 
 FILE* file = nullptr;
 
-StreamVec<Token> tokens;
-
 Stack<std::string> vars;
 Stack<int> blockVarPop;
 
@@ -24,16 +22,16 @@ void printToken(const Token* token)
 	std::cout << typeToStr(token->type) << ", " << token->data << '\n';
 }
 
-void parseFunction();
-void parseFunctionCall();
-void parseExpr(std::vector<std::string>& endOfArgTokens);
+void parseFunction(StreamVec<Token>& tokens);
+void parseFunctionCall(StreamVec<Token>& tokens);
+void parseExpr(std::vector<std::string>& endOfArgTokens, StreamVec<Token>& tokens);
 
 inline bool newlineOrSemicolon(const Token* token)
 {
 	return *token == TokenType::NewLine || *token == TokenType::Semicolon;
 }
 
-void writeExpr(int j, const std::vector<std::vector<Token*>>& tokens)
+void writeExpr(FILE* file, int j, const std::vector<std::vector<Token*>>& tokens)
 {
 	fputc(2, file);
 	for (const Token* t : tokens[j])
@@ -41,7 +39,7 @@ void writeExpr(int j, const std::vector<std::vector<Token*>>& tokens)
 		if (t->type == TokenType::NestingHelper)
 		{
 			int ind = std::stoi(t->data);
-			writeExpr(ind, tokens);
+			writeExpr(file, ind, tokens);
 			continue;
 		}
 		writeToken(*t, file);
@@ -49,16 +47,19 @@ void writeExpr(int j, const std::vector<std::vector<Token*>>& tokens)
 	fputc(255, file);
 }
 
-int main(int argc, const char** argv)
+void parseFile(const char* filename)
 {
+	StreamVec<Token> tokens;
+
 	std::vector<Token> tokens2;
-	file = fopen(argv[1], "rb");
-	fseek(file, 0, SEEK_END);
-	int size = ftell(file);
-	rewind(file);
+
+	FILE* inFile = fopen(filename, "rb");
+	fseek(inFile, 0, SEEK_END);
+	int size = ftell(inFile);
+	rewind(inFile);
 	char* input = new char[size];
-	fread(input, 1, size, file);
-	fclose(file);
+	fread(input, 1, size, inFile);
+	fclose(inFile);
 
 	tokenize(input, size, &tokens2);
 
@@ -81,8 +82,6 @@ int main(int argc, const char** argv)
 
 	tokens2.resize(0);
 
-	file = fopen("out.a", "wb");
-
 	tokens.consume(-1);
 
 	while (*tokens.get(0) != TokenType::Eof)
@@ -92,13 +91,13 @@ int main(int argc, const char** argv)
 		{
 			if (*token == "function")
 			{
-				parseFunction();
+				parseFunction(tokens);
 			}
 			else if (*token == "if")
 			{
 				std::vector<std::string> endOfArgTokens = {"then"};
 				fputc(5, file);
-				parseExpr(endOfArgTokens);
+				parseExpr(endOfArgTokens, tokens);
 				blockVarPop.push(vars.size());
 			}
 			else if (*token == "end")
@@ -124,8 +123,21 @@ int main(int argc, const char** argv)
 					fputs(name.c_str(), file);
 					fputc(0, file);
 					std::vector<std::string> endOfArgTokens = {"\n", ";"};
-					parseExpr(endOfArgTokens);
+					parseExpr(endOfArgTokens, tokens);
 				}
+			}
+			else if (*token == "require")
+			{
+				const Token* token2 = tokens.consume();
+				if (*token2 != TokenType::OpenParan)
+					err("expected ( after require");
+				token2 = tokens.consume();
+				if (*token2 != TokenType::String)
+					err("expected string after require(");
+				std::string name = token2->data;
+				name = name.substr(1, name.size() - 2);
+				parseFile(name.c_str());
+				tokens.consume(2);
 			}
 		}
 		else if (*token == TokenType::Text)
@@ -133,7 +145,7 @@ int main(int argc, const char** argv)
 			const Token* token2 = tokens.get(1);
 			if (*token2 == TokenType::OpenParan)
 			{
-				parseFunctionCall();
+				parseFunctionCall(tokens);
 			}
 			if (*token2 == "=")
 			{
@@ -144,16 +156,14 @@ int main(int argc, const char** argv)
 					fputc(0, file);
 					tokens.consume();
 					std::vector<std::string> endOfArgTokens = {";", "\n"};
-					parseExpr(endOfArgTokens);
+					parseExpr(endOfArgTokens, tokens);
 				}
 			}
 		}
 	}
-	fclose(file);
-	return 0;
 }
 
-void parseExpr(std::vector<std::string>& endOfArgTokens)
+void parseExpr(std::vector<std::string>& endOfArgTokens, StreamVec<Token>& tokens)
 {
 	if (vecContains(endOfArgTokens, tokens.get(2)->data))
 	{
@@ -200,11 +210,11 @@ void parseExpr(std::vector<std::string>& endOfArgTokens)
 			}
 		}
 		parseExpression(size, &outTokens, tokens);
-		writeExpr(0, outTokens);
+		writeExpr(file, 0, outTokens);
 	}
 }
 
-void parseFunctionCall()
+void parseFunctionCall(StreamVec<Token>& tokens)
 {
 	const Token* token = tokens.get();
 	std::string name = token->data;
@@ -248,11 +258,11 @@ void parseFunctionCall()
 	std::vector<std::string> endOfArgTokens = {",", ")"};
 	for (int k = 0; k < argc; k++)
 	{
-		parseExpr(endOfArgTokens);
+		parseExpr(endOfArgTokens, tokens);
 	}
 }
 
-void parseFunction()
+void parseFunction(StreamVec<Token>& tokens)
 {
 	const Token* token = tokens.consume();
 	if (*token != TokenType::Text)
@@ -304,4 +314,15 @@ void parseFunction()
 	}
 	else
 		err("end or newline expected after function declaration");
+}
+
+int main(int argc, const char** argv)
+{
+  if(argc < 3)
+    err("compiler requires 2 args (out file, in file(s))");
+
+	file = fopen(argv[1], "wb");
+  for(int i = 2; i < argc; i++)
+	  parseFile(argv[i]);
+	fclose(file);
 }
