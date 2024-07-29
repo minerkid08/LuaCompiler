@@ -1,15 +1,12 @@
 #include <cstdio>
 #include <string>
+#include <unordered_map>
 
 #include "FileUtils.hpp"
+#include "ReadDll.hpp"
 #include "Stack.hpp"
 #include "Token.hpp"
 #include "Utils.hpp"
-
-#include "ReadDll.hpp"
-
-#include <iostream>
-#include <unordered_map>
 
 enum class LabelType
 {
@@ -176,7 +173,37 @@ int main(int argc, const char** argv)
 					fputc(argc, file);
 					for (int j = 0; j < argc; j++)
 					{
-						parseExpr(input);
+						if (input.get(1) == 5)
+						{
+              input.consume();
+							std::string str = readString(input);
+							if (globalVars.contains(str))
+							{
+								fputc(6, file);
+								for (char i = 0; i < globalVars.size(); i++)
+								{
+									if (globalVars[i] == str)
+									{
+										fputc(i, file);
+										break;
+									}
+								}
+							}
+							else
+							{
+								fputc(5, file);
+								for (char i = 0; i < localVars.size(); i++)
+								{
+									if (localVars[i] == str)
+									{
+										fputc(i, file);
+										break;
+									}
+								}
+							}
+						}
+						else
+							parseExpr(input);
 					}
 				}
 				else

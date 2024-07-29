@@ -1,14 +1,23 @@
 require("stdlib.lua")
-require("header.lua")
 
 local a = 4
-if a == 4 then
-	local b = 5
-	a = a + b
-	dothing(4)
-	println(b)
-	println(a)
+local opr = 4
+local b = 4
+cin(ref a);
+cin(ref opr);
+cin(ref b);
+
+if(opr == 1) then
+  println(a + b);
 end
-println(a)
-dothing();
+if(opr == 2) then
+  println(a - b);
+end
+if(opr == 3) then
+  println(a * b);
+end
+if(opr == 4) then
+  println(a / b);
+end
+
 exit2()

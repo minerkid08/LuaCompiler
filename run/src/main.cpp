@@ -214,7 +214,18 @@ int main(int argc, const char** argv)
 			{
 				for (int j = 0; j < argc; j++)
 				{
-					args.push_back(parseExpr());
+					if (input.get(1) == 5)
+					{
+						args.push_back(&localVars[input.get(2) + varOffsets.top()]);
+						input.consume(2);
+					}
+					else if (input.get(1) == 6)
+					{
+						args.push_back(&vars[input.get(2)]);
+						input.consume(2);
+					}
+					else
+						args.push_back(parseExpr());
 				}
 			}
 			NativeFunc fun = reinterpret_cast<NativeFunc>(libFunctions[id]);

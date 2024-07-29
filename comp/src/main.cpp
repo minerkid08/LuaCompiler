@@ -258,7 +258,16 @@ void parseFunctionCall(StreamVec<Token>& tokens)
 	std::vector<std::string> endOfArgTokens = {",", ")"};
 	for (int k = 0; k < argc; k++)
 	{
-		parseExpr(endOfArgTokens, tokens);
+		if (*tokens.get(1) == "ref")
+		{
+			fputc(5, file);
+			if (*tokens.get(2) != TokenType::Text)
+				err("ref var must be text");
+			writeString(tokens.get(2)->data, file);
+			tokens.consume(2);
+		}
+		else
+			parseExpr(endOfArgTokens, tokens);
 	}
 }
 
@@ -318,11 +327,11 @@ void parseFunction(StreamVec<Token>& tokens)
 
 int main(int argc, const char** argv)
 {
-  if(argc < 3)
-    err("compiler requires 2 args (out file, in file(s))");
+	if (argc < 3)
+		err("compiler requires 2 args (out file, in file(s))");
 
 	file = fopen(argv[1], "wb");
-  for(int i = 2; i < argc; i++)
-	  parseFile(argv[i]);
+	for (int i = 2; i < argc; i++)
+		parseFile(argv[i]);
 	fclose(file);
 }

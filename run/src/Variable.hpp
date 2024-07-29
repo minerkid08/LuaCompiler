@@ -2,23 +2,31 @@
 
 enum class VarType
 {
-	Number
+	Number,
+	NumberPtr
 };
 
 struct Variable
 {
 	VarType type;
-	int data;
+	void* data;
 	Variable()
 	{
 	}
 	Variable(int n)
 	{
-		data = n;
+    type = VarType::Number;
+    long long n2 = n;
+		data = (void*)n2;
 	}
-	Variable(VarType t, int n)
+	Variable(int* n)
 	{
-		type = t;
-		data = n;
+		type = VarType::NumberPtr;
+		data = (void*)n;
+	}
+	int geti()
+	{
+    long long d = (long long)data;
+		return (int)d;
 	}
 };
