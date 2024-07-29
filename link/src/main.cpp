@@ -38,6 +38,7 @@ FILE* file;
 int funcIndex = 0;
 
 Stack<LabelElement> labels;
+Stack<std::vector<int>> loopLables;
 
 Stack<std::string> globalVars;
 Stack<int> globalVarInds;
@@ -173,37 +174,7 @@ int main(int argc, const char** argv)
 					fputc(argc, file);
 					for (int j = 0; j < argc; j++)
 					{
-						if (input.get(1) == 5)
-						{
-							input.consume();
-							std::string str = readString(input);
-							if (globalVars.contains(str))
-							{
-								fputc(6, file);
-								for (char i = 0; i < globalVars.size(); i++)
-								{
-									if (globalVars[i] == str)
-									{
-										fputc(i, file);
-										break;
-									}
-								}
-							}
-							else
-							{
-								fputc(5, file);
-								for (char i = 0; i < localVars.size(); i++)
-								{
-									if (localVars[i] == str)
-									{
-										fputc(i, file);
-										break;
-									}
-								}
-							}
-						}
-						else
-							parseExpr(input);
+						parseExpr(input);
 					}
 				}
 				else
@@ -281,6 +252,13 @@ int main(int argc, const char** argv)
 					writeInt(j - 1, file);
 					fsetpos(file, &j);
 					writeInt(currentPos, file);
+					for (int i = 0; i < loopLables.top().size(); i++)
+					{
+						long long a = loopLables.top()[i];
+						fsetpos(file, &a);
+						writeInt(currentPos, file);
+					}
+					loopLables.pop();
 					fsetpos(file, &currentPos);
 				}
 				else if (elem.type == LabelType::Function)
@@ -314,8 +292,15 @@ int main(int argc, const char** argv)
 				fputc(10, file);
 				varInds->push(vars->size());
 				labels.push({LabelType::While, ftell(file)});
+				loopLables.push({});
 				writeInt(0, file);
 				parseExpr(input);
+			}
+			else if (c == 9)
+			{
+				fputc(12, file);
+				loopLables.top().push_back(ftell(file));
+				writeInt(0, file);
 			}
 		}
 	}

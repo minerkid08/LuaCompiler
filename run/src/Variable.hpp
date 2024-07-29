@@ -3,30 +3,37 @@
 enum class VarType
 {
 	Number,
-	NumberPtr
+	NumberPtr,
+	Opration
 };
 
 struct Variable
 {
 	VarType type;
 	void* data;
-	Variable()
+	inline Variable()
 	{
 	}
-	Variable(int n)
+	inline Variable(int n, VarType t = VarType::Number)
 	{
-    type = VarType::Number;
-    long long n2 = n;
+		type = t;
+		long long n2 = n;
 		data = (void*)n2;
 	}
-	Variable(int* n)
+	inline Variable(int* n)
 	{
 		type = VarType::NumberPtr;
 		data = (void*)n;
 	}
-	int geti()
+	inline int geti() const
 	{
-    long long d = (long long)data;
+		long long d = (long long)data;
 		return (int)d;
+	}
+	inline int toInt() const
+	{
+		if (type == VarType::NumberPtr)
+			return *(int*)data;
+		return geti();
 	}
 };

@@ -9,14 +9,8 @@
 #include "Stream.hpp"
 #include "Utils.hpp"
 
-int vars[32];
-int localVars[32];
-
-struct Var
-{
-	int id;
-	int value;
-};
+Variable vars[32];
+Variable localVars[32];
 
 std::string intToHex(int i)
 {
@@ -25,92 +19,123 @@ std::string intToHex(int i)
 	return s.str();
 }
 
+#define Ttype_lVar 1
+#define Ttype_gVar 2
+#define Ttype_lRef 3
+#define Ttype_gRef 4
+#define Ttype_Num 5
+#define Ttype_Opr 6
+#define Ttype_Expr 7
+#define Ttype_Nil 8
+
+struct Token
+{
+	char type;
+	int data;
+};
+
 Stack<int> callStack;
 Stack<int> varOffsets;
 Stream<char> input;
 
 typedef void (*NativeFunc)(const std::vector<Variable>& vars);
 
-Var readToken()
+inline Token readToken()
 {
 	unsigned char type = input.consume();
 	if (type == 0)
 	{
 		char id = input.consume();
-		return {id, 0};
+		return {Ttype_gVar, id};
 	}
 	if (type == 1)
 	{
 		int num = readInt(input);
-		return {-1, num};
+		return {Ttype_Num, num};
 	}
 	if (type == 2)
 	{
-		return {-3, 0};
+		return {Ttype_Expr, 0};
 	}
 	if (type == 3)
 	{
 		char data = input.consume();
-		return {-4, data};
+		return {Ttype_Opr, data};
 	}
 	if (type == 4)
 	{
 		char id = input.consume();
-		return {-5, id};
+		return {Ttype_lVar, id};
 	}
-	return {-2, 0};
+	if (type == 5)
+	{
+		char id = input.consume();
+		return {Ttype_gRef, id};
+	}
+	if (type == 6)
+	{
+		char id = input.consume();
+		return {Ttype_lRef, id};
+	}
+	return {Ttype_Nil, 0};
 }
 
-int parseExpr(Var v = {-2, 0})
+Variable parseExpr(Token v = {Ttype_Nil, 0})
 {
-	if (v.id == -2)
+	if (v.type == Ttype_Nil)
 		v = readToken();
-	if (v.id == -1)
+	if (v.type == Ttype_lRef)
 	{
-		return v.value;
+		return (int*)&(localVars[v.data + varOffsets.top()].data);
 	}
-	if (v.id >= 0)
+	if (v.type == Ttype_gRef)
 	{
-		return vars[v.id];
+		return (int*)&(vars[v.data].data);
 	}
-	if (v.id == -5)
+	if (v.type == Ttype_Num)
 	{
-		return localVars[v.value];
+		return v.data;
 	}
-	if (v.id == -3)
+	if (v.type == Ttype_gVar)
 	{
-		std::vector<Var> vars2;
+		return vars[v.data].geti();
+	}
+	if (v.type == Ttype_lVar)
+	{
+		return localVars[v.data].geti();
+	}
+	if (v.type == Ttype_Expr)
+	{
+		std::vector<Variable> vars2;
 		while (true)
 		{
-			Var v = readToken();
-			if (v.id == -4)
-				vars2.push_back(v);
+			Token v = readToken();
+			if (v.type == Ttype_Opr)
+				vars2.push_back({v.data, VarType::Opration});
 			else
-				vars2.push_back({-1, parseExpr(v)});
+				vars2.push_back(parseExpr(v));
 			if ((unsigned char)input.get(1) == 255)
 			{
 				input.consume();
 				break;
 			}
 		}
-		Stack<Var> tempStack;
+		Stack<Variable> tempStack;
 		int s2 = vars2.size();
 		for (int i = 0; i < s2; i++)
 		{
-			Var& var = vars2[i];
-			if (var.id == -1 || var.id >= 0)
+			Variable& var = vars2[i];
+			if (var.type == VarType::Number)
 			{
 				tempStack.push(var);
 			}
 			else
 			{
-				char operation = var.value;
-				const Var& a = tempStack[tempStack.size() - 2];
-				const Var& b = tempStack.top();
-				int avalue;
-				avalue = a.value;
-				int bvalue;
-				bvalue = b.value;
+				char operation = var.geti();
+				const Variable& a = tempStack[tempStack.size() - 2];
+				const Variable& b = tempStack.top();
+				int avalue = a.geti();
+				int bvalue = b.geti();
 				int out;
 				if (operation == '+')
 					out = avalue + bvalue;
@@ -125,14 +150,11 @@ int parseExpr(Var v = {-2, 0})
 				else if (operation == 2)
 					out = avalue != bvalue;
 
-				Var var2;
-				var2.id = -1;
-				var2.value = out;
 				tempStack.pop(2);
-				tempStack.push(var2);
+				tempStack.push(out);
 			}
 		}
-		return tempStack.top().value;
+		return tempStack.top().geti();
 	}
 	return 0;
 }
@@ -216,18 +238,7 @@ int main(int argc, const char** argv)
 			{
 				for (int j = 0; j < argc; j++)
 				{
-					if (input.get(1) == 5)
-					{
-						args.push_back(&localVars[input.get(2) + varOffsets.top()]);
-						input.consume(2);
-					}
-					else if (input.get(1) == 6)
-					{
-						args.push_back(&vars[input.get(2)]);
-						input.consume(2);
-					}
-					else
-						args.push_back(parseExpr());
+					args.push_back(parseExpr());
 				}
 			}
 			NativeFunc fun = reinterpret_cast<NativeFunc>(libFunctions[id]);
@@ -245,7 +256,7 @@ int main(int argc, const char** argv)
 		else if (c == 5)
 		{
 			int newI = readInt(input.i, input.getPtr());
-			if (parseExpr() == 0)
+			if (parseExpr().toInt() == 0)
 			{
 				input.i = newI - 1;
 			}
@@ -273,13 +284,18 @@ int main(int argc, const char** argv)
 		else if (c == 10)
 		{
 			int contAddr = readInt(input);
-			int c = parseExpr();
+			int c = parseExpr().toInt();
 			if (c == 0)
 			{
 				input.i = contAddr - 1;
 			}
 		}
 		else if (c == 11)
+		{
+			int addr = readInt(input);
+			input.i = addr - 1;
+		}
+		else if (c == 12)
 		{
 			int addr = readInt(input);
 			input.i = addr - 1;
