@@ -9,6 +9,7 @@ enum class TokenType{
   Number,
   Text,
   Operator,
+  Ref,
   Null
 };
 

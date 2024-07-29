@@ -72,8 +72,11 @@ void parseFile(const char* filename)
 		{
 			if (tokens2[l + 1].type == TokenType::Operator && tokens2[l + 1].data == "=")
 			{
+				if (*t == "=")
+					tokens.push({TokenType::Operator, "\1"});
+				else if (*t == "!")
+					tokens.push({TokenType::Operator, "\2"});
 				l++;
-				tokens.push({TokenType::Operator, "\1"});
 				continue;
 			}
 		}
@@ -100,12 +103,23 @@ void parseFile(const char* filename)
 				parseExpr(endOfArgTokens, tokens);
 				blockVarPop.push(vars.size());
 			}
+			else if (*token == "while")
+			{
+				std::vector<std::string> endOfArgTokens = {"do"};
+				fputc(8, file);
+				parseExpr(endOfArgTokens, tokens);
+				blockVarPop.push(vars.size());
+			}
 			else if (*token == "end")
 			{
 				fputc(6, file);
 				int ts = blockVarPop.top();
 				vars.popTo(ts);
 				blockVarPop.pop();
+			}
+			else if (*token == "break")
+			{
+				fputc(9, file);
 			}
 			else if (*token == "local")
 			{
@@ -165,7 +179,15 @@ void parseFile(const char* filename)
 
 void parseExpr(std::vector<std::string>& endOfArgTokens, StreamVec<Token>& tokens)
 {
-	if (vecContains(endOfArgTokens, tokens.get(2)->data))
+	if (*tokens.get(1) == "ref")
+	{
+		fputc(5, file);
+		if (*tokens.get(2) != TokenType::Text)
+			err("ref var must be text");
+		writeString(tokens.get(2)->data, file);
+		tokens.consume(2);
+	}
+	else if (vecContains(endOfArgTokens, tokens.get(2)->data))
 	{
 		const Token* token = tokens.consume();
 		if (*token == TokenType::Text)
@@ -181,10 +203,10 @@ void parseExpr(std::vector<std::string>& endOfArgTokens, StreamVec<Token>& token
 	else
 	{
 		std::vector<std::vector<Token*>> outTokens;
-		int size = 0;
+		int size = 1;
 		int i = 0;
 		int nestedLevel = 0;
-		const Token* token;
+		const Token* token = tokens.get(1);
 		while (true)
 		{
 			if (vecContains(endOfArgTokens, token->data) && nestedLevel == 0)
@@ -258,16 +280,7 @@ void parseFunctionCall(StreamVec<Token>& tokens)
 	std::vector<std::string> endOfArgTokens = {",", ")"};
 	for (int k = 0; k < argc; k++)
 	{
-		if (*tokens.get(1) == "ref")
-		{
-			fputc(5, file);
-			if (*tokens.get(2) != TokenType::Text)
-				err("ref var must be text");
-			writeString(tokens.get(2)->data, file);
-			tokens.consume(2);
-		}
-		else
-			parseExpr(endOfArgTokens, tokens);
+		parseExpr(endOfArgTokens, tokens);
 	}
 }
 

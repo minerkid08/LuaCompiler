@@ -122,6 +122,8 @@ int parseExpr(Var v = {-2, 0})
 					out = avalue / bvalue;
 				else if (operation == 1)
 					out = avalue == bvalue;
+				else if (operation == 2)
+					out = avalue != bvalue;
 
 				Var var2;
 				var2.id = -1;
@@ -267,6 +269,20 @@ int main(int argc, const char** argv)
 			input.i = callStack.top();
 			callStack.pop();
 			varOffsets.pop();
+		}
+		else if (c == 10)
+		{
+			int contAddr = readInt(input);
+			int c = parseExpr();
+			if (c == 0)
+			{
+				input.i = contAddr - 1;
+			}
+		}
+		else if (c == 11)
+		{
+			int addr = readInt(input);
+			input.i = addr - 1;
 		}
 	}
 }

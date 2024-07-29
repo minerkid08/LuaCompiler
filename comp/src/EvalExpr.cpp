@@ -14,6 +14,8 @@ int getPriority(const Token& t)
 		return 3;
 	if (t.data == "\1")
 		return 0;
+	if (t.data == "\2")
+		return 0;
 	return -1;
 }
 

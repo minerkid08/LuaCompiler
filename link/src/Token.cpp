@@ -35,6 +35,13 @@ Token readToken(Stream<char>& data)
 		c[1] = '\0';
 		return {TokenType::Operator, c};
 	}
+	else if (type == 5)
+	{
+		char* c = new char[2];
+		c[0] = data.consume();
+		c[1] = '\0';
+		return {TokenType::Ref, c};
+	}
 	return {TokenType::Null, ""};
 }
 
@@ -50,7 +57,7 @@ void writeToken(const Token& t, Stack<std::string>& globalVars, Stack<std::strin
 				if (globalVars[i] == t.data)
 				{
 					fputc(i, file);
-          break;
+					break;
 				}
 			}
 		}
@@ -62,7 +69,7 @@ void writeToken(const Token& t, Stack<std::string>& globalVars, Stack<std::strin
 				if (localVars[i] == t.data)
 				{
 					fputc(i, file);
-          break;
+					break;
 				}
 			}
 		}

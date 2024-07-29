@@ -8,13 +8,16 @@ std::vector<std::string> keywords = {
   "end",
   "if",
   "then",
+  "do",
   "local",
+  "while",
+  "break",
   "require",
   "ref"
 };
 
 std::vector<std::string> operators = {
-  "+", "-", "*", "/", "="
+  "+", "-", "*", "/", "=", "!"
 };
 
 void addToken(std::string& str)

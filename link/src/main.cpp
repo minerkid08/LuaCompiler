@@ -11,6 +11,7 @@
 enum class LabelType
 {
 	If,
+	While,
 	Function
 };
 
@@ -68,7 +69,7 @@ void parseExpr(Stream<char>& input)
 		fputc(255, file);
 		return;
 	}
-	if (id == 1 || id == 0 || id == 3)
+	if (id == 1 || id == 0 || id == 3 || id == 5)
 	{
 		Token t = readToken(input);
 		writeToken(t, globalVars, localVars, file);
@@ -149,7 +150,6 @@ int main(int argc, const char** argv)
 			}
 			if (c == 3)
 			{
-				varInds->push(vars->size());
 				std::string name = readString(input);
 				std::string nativeName = name.substr(0, name.find(':'));
 				bool native = false;
@@ -175,7 +175,7 @@ int main(int argc, const char** argv)
 					{
 						if (input.get(1) == 5)
 						{
-              input.consume();
+							input.consume();
 							std::string str = readString(input);
 							if (globalVars.contains(str))
 							{
@@ -253,6 +253,7 @@ int main(int argc, const char** argv)
 			else if (c == 5)
 			{
 				fputc(5, file);
+				varInds->push(vars->size());
 				labels.push({LabelType::If, ftell(file)});
 				writeInt(currentMarkerIndex++, file);
 				parseExpr(input);
@@ -266,6 +267,18 @@ int main(int argc, const char** argv)
 					varInds->pop();
 					long long j = elem.pos;
 					long long currentPos = ftell(file);
+					fsetpos(file, &j);
+					writeInt(currentPos, file);
+					fsetpos(file, &currentPos);
+				}
+				else if (elem.type == LabelType::While)
+				{
+					vars->popTo(varInds->top());
+					varInds->pop();
+					long long j = elem.pos;
+					long long currentPos = ftell(file) + 5;
+					fputc(11, file);
+					writeInt(j - 1, file);
 					fsetpos(file, &j);
 					writeInt(currentPos, file);
 					fsetpos(file, &currentPos);
@@ -295,6 +308,14 @@ int main(int argc, const char** argv)
 				{
 					vars->push(args[i]);
 				}
+			}
+			else if (c == 8)
+			{
+				fputc(10, file);
+				varInds->push(vars->size());
+				labels.push({LabelType::While, ftell(file)});
+				writeInt(0, file);
+				parseExpr(input);
 			}
 		}
 	}
