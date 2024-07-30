@@ -2,6 +2,7 @@
 #include <string>
 #include <unordered_map>
 
+#include "Page.hpp"
 #include "FileUtils.hpp"
 #include "ReadDll.hpp"
 #include "Stack.hpp"
@@ -33,7 +34,9 @@ struct FunctionMarker
 	int pos;
 };
 
-FILE* file;
+std::vector<Page> pages = {{}};
+
+Page* currentPage = &pages[0];
 
 int funcIndex = 0;
 
@@ -59,7 +62,7 @@ void parseExpr(Stream<char>& input)
 	if (id == 2)
 	{
 		input.consume();
-		fputc(2, file);
+		currentPage->writeChar(2);
 		unsigned char g = 0;
 		while (g != 255)
 		{
@@ -67,31 +70,31 @@ void parseExpr(Stream<char>& input)
 			g = input.get(1);
 		}
 		input.consume();
-		fputc(255, file);
+		currentPage->writeChar(255);
 		return;
 	}
 	if (id == 1 || id == 0 || id == 3 || id == 5)
 	{
 		Token t = readToken(input);
-		writeToken(t, globalVars, localVars, file);
+		currentPage->writeToken(t, globalVars, localVars);
 	}
 }
 
 void setVariable(const std::string& name, Stream<char>& input)
 {
 	vars->push(name);
-	fputc(1, file);
+	currentPage->writeChar(1);
 	if (vars == &localVars)
-		fputc(1, file);
+		currentPage->writeChar(1);
 	else
-		fputc(2, file);
-	fputc(vars->size() - 1, file);
+		currentPage->writeChar(2);
+	currentPage->writeChar(vars->size() - 1);
 	parseExpr(input);
 }
 
 void setFunVariable(const std::string& name, char id, Stream<char>& input)
 {
-	fputc(id, file);
+	currentPage->writeChar(id);
 	parseExpr(input);
 }
 
@@ -99,8 +102,8 @@ int main(int argc, const char** argv)
 {
 	if (argc < 3)
 		err("requires 2 args: out file, in file(s)");
-	file = fopen(argv[1], "wb");
-	writeInt(0, file);
+	FILE* file = fopen(argv[1], "wb");
+	currentPage->writeInt(0);
 
 	std::unordered_map<std::string, std::vector<std::string>> libs;
 	libs["stdlib"] = {};
@@ -164,14 +167,14 @@ int main(int argc, const char** argv)
 				}
 				if (native)
 				{
-					putc(9, file);
+					currentPage->writeChar(9);
 					if (funcs.find(nativeName) == funcs.end())
 						funcs[nativeName] = {};
-					FunctionMarker marker = {FunctionMarkerType::Usage, ftell(file)};
+					FunctionMarker marker = {FunctionMarkerType::Usage, currentPage->i};
 					funcs[nativeName].push_back(marker);
-					fputc(0, file);
+					currentPage->writeChar(0);
 					unsigned char argc = input.consume();
-					fputc(argc, file);
+					currentPage->writeChar(argc);
 					for (int j = 0; j < argc; j++)
 					{
 						parseExpr(input);
@@ -179,16 +182,16 @@ int main(int argc, const char** argv)
 				}
 				else
 				{
-					fputc(3, file);
+					currentPage->writeChar(3);
 					if (funcs.find(name) == funcs.end())
 						funcs[name] = {};
 					char varC = localVars.size();
-					fputc(varC, file);
-					FunctionMarker marker = {FunctionMarkerType::Usage, ftell(file)};
+				  currentPage->writeChar(varC);
+					FunctionMarker marker = {FunctionMarkerType::Usage, currentPage->i};
 					funcs[name].push_back(marker);
-					writeInt(0, file);
+					currentPage->writeInt(0);
 					unsigned char argc = input.consume();
-					fputc(argc, file);
+					currentPage->writeChar(argc);
 					std::vector<std::string>* args = &(funcArgs[name]);
 					for (int j = 0; j < argc; j++)
 					{
@@ -199,13 +202,13 @@ int main(int argc, const char** argv)
 			else if (c == 4)
 			{
 				std::string name = readString(input);
-				fputc(4, file);
+				currentPage->writeChar(4);
 				for (int i = 0; i < localVars.size(); i++)
 				{
 					if (localVars[i] == name)
 					{
-						fputc(1, file);
-						fputc(i, file);
+						currentPage->writeChar(1);
+						currentPage->writeChar(i);
 						parseExpr(input);
 						continue;
 					}
@@ -214,8 +217,8 @@ int main(int argc, const char** argv)
 				{
 					if (globalVars[i] == name)
 					{
-						fputc(2, file);
-						fputc(i, file);
+						currentPage->writeChar(2);
+						currentPage->writeChar(i);
 						parseExpr(input);
 						continue;
 					}
@@ -223,10 +226,10 @@ int main(int argc, const char** argv)
 			}
 			else if (c == 5)
 			{
-				fputc(5, file);
+				currentPage->writeChar(5);
 				varInds->push(vars->size());
-				labels.push({LabelType::If, ftell(file)});
-				writeInt(currentMarkerIndex++, file);
+				labels.push({LabelType::If, currentPage->i});
+				currentPage->writeInt(currentMarkerIndex++);
 				parseExpr(input);
 			}
 			else if (c == 6)
@@ -237,33 +240,33 @@ int main(int argc, const char** argv)
 					vars->popTo(varInds->top());
 					varInds->pop();
 					long long j = elem.pos;
-					long long currentPos = ftell(file);
-					fsetpos(file, &j);
-					writeInt(currentPos, file);
-					fsetpos(file, &currentPos);
+					long long currentPos = currentPage->i;
+					currentPage->i = j;
+					currentPage->writeInt(currentPos);
+					currentPage->i = currentPos;
 				}
 				else if (elem.type == LabelType::While)
 				{
 					vars->popTo(varInds->top());
 					varInds->pop();
 					long long j = elem.pos;
-					long long currentPos = ftell(file) + 5;
-					fputc(11, file);
-					writeInt(j - 1, file);
-					fsetpos(file, &j);
-					writeInt(currentPos, file);
+					long long currentPos = currentPage->i + 5;
+					currentPage->writeChar(11);
+					currentPage->writeInt(j - 1);
+					currentPage->i = j;
+					currentPage->writeInt(currentPos);
 					for (int i = 0; i < loopLables.top().size(); i++)
 					{
 						long long a = loopLables.top()[i];
-						fsetpos(file, &a);
-						writeInt(currentPos, file);
+						currentPage->i = a;
+						currentPage->writeInt(currentPos);
 					}
 					loopLables.pop();
-					fsetpos(file, &currentPos);
+					currentPage->i = currentPos;
 				}
 				else if (elem.type == LabelType::Function)
 				{
-					fputc(8, file);
+					currentPage->writeChar(8);
 					vars->popTo(0);
 					varInds->popTo(0);
 					vars = &globalVars;
@@ -278,7 +281,7 @@ int main(int argc, const char** argv)
 				std::string name = readString(input);
 				if (funcs.find(name) == funcs.end())
 					funcs[name] = {};
-				FunctionMarker marker = {FunctionMarkerType::Definition, ftell(file)};
+				FunctionMarker marker = {FunctionMarkerType::Definition, currentPage->i};
 				labels.push({LabelType::Function, 4});
 				funcs[name].push_back(marker);
 				std::vector<std::string>& args = funcArgs[name];
@@ -289,25 +292,26 @@ int main(int argc, const char** argv)
 			}
 			else if (c == 8)
 			{
-				fputc(10, file);
+				currentPage->writeChar(10);
 				varInds->push(vars->size());
-				labels.push({LabelType::While, ftell(file)});
+				labels.push({LabelType::While, currentPage->i});
 				loopLables.push({});
-				writeInt(0, file);
+				currentPage->writeInt(0);
 				parseExpr(input);
 			}
 			else if (c == 9)
 			{
-				fputc(12, file);
-				loopLables.top().push_back(ftell(file));
-				writeInt(0, file);
+				currentPage->writeChar(12);
+				loopLables.top().push_back(currentPage->i);
+				currentPage->writeInt(0);
 			}
 		}
 	}
 
-	fputc(0, file);
+	currentPage->writeChar(0);
+  currentPage->writeToFile(file);
 
-	long long pos = ftell(file);
+	long long pos = currentPage->i;
 
 	std::vector<std::string> funcVec;
 	for (auto& [funcName, refs] : funcs)
