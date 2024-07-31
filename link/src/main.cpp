@@ -2,8 +2,8 @@
 #include <string>
 #include <unordered_map>
 
-#include "Page.hpp"
 #include "FileUtils.hpp"
+#include "Page.hpp"
 #include "ReadDll.hpp"
 #include "Stack.hpp"
 #include "Token.hpp"
@@ -28,13 +28,9 @@ enum class FunctionMarkerType
 	Usage
 };
 
-struct FunctionMarker
-{
-	FunctionMarkerType type;
-	int pos;
-};
-
 std::vector<Page> pages = {{}};
+
+std::unordered_map<std::string, int> funcPageIndex;
 
 Page* currentPage = &pages[0];
 
@@ -52,7 +48,6 @@ Stack<int> localVarsInds;
 Stack<std::string>* vars = &globalVars;
 Stack<int>* varInds = &globalVarInds;
 
-std::unordered_map<std::string, std::vector<FunctionMarker>> funcs;
 std::unordered_map<std::string, std::vector<std::string>> funcArgs;
 int currentMarkerIndex = 0;
 
@@ -109,6 +104,8 @@ int main(int argc, const char** argv)
 	libs["stdlib"] = {};
 	getDllFunctions("stdlib.dll", libs["stdlib"]);
 
+	currentPage->name = "main";
+
 	for (int l = 2; l < argc; l++)
 	{
 		Stream<char> input;
@@ -124,9 +121,10 @@ int main(int argc, const char** argv)
 		input.setPtr(input2);
 
 		input.i = -1;
+
 		while (input.get(1) != 0)
 		{
-			char c = input.consume();
+			unsigned char c = input.consume();
 			if (c == 1)
 			{
 				std::string name = readString(input);
@@ -168,10 +166,7 @@ int main(int argc, const char** argv)
 				if (native)
 				{
 					currentPage->writeChar(9);
-					if (funcs.find(nativeName) == funcs.end())
-						funcs[nativeName] = {};
-					FunctionMarker marker = {FunctionMarkerType::Usage, currentPage->i};
-					funcs[nativeName].push_back(marker);
+					currentPage->funUssages.push_back({nativeName, currentPage->i});
 					currentPage->writeChar(0);
 					unsigned char argc = input.consume();
 					currentPage->writeChar(argc);
@@ -183,12 +178,9 @@ int main(int argc, const char** argv)
 				else
 				{
 					currentPage->writeChar(3);
-					if (funcs.find(name) == funcs.end())
-						funcs[name] = {};
 					char varC = localVars.size();
-				  currentPage->writeChar(varC);
-					FunctionMarker marker = {FunctionMarkerType::Usage, currentPage->i};
-					funcs[name].push_back(marker);
+					currentPage->writeChar(varC);
+					currentPage->funUssages.push_back({name, currentPage->i});
 					currentPage->writeInt(0);
 					unsigned char argc = input.consume();
 					currentPage->writeChar(argc);
@@ -271,6 +263,7 @@ int main(int argc, const char** argv)
 					varInds->popTo(0);
 					vars = &globalVars;
 					varInds = &globalVarInds;
+					currentPage = &(pages[0]);
 				}
 				labels.pop();
 			}
@@ -279,11 +272,11 @@ int main(int argc, const char** argv)
 				vars = &localVars;
 				varInds = &localVarsInds;
 				std::string name = readString(input);
-				if (funcs.find(name) == funcs.end())
-					funcs[name] = {};
-				FunctionMarker marker = {FunctionMarkerType::Definition, currentPage->i};
+				funcPageIndex[name] = pages.size();
+				pages.push_back({});
+				currentPage = &(pages[pages.size() - 1]);
+				currentPage->name = name;
 				labels.push({LabelType::Function, 4});
-				funcs[name].push_back(marker);
 				std::vector<std::string>& args = funcArgs[name];
 				for (int i = 0; i < args.size(); i++)
 				{
@@ -308,35 +301,63 @@ int main(int argc, const char** argv)
 		}
 	}
 
-	currentPage->writeChar(0);
-  currentPage->writeToFile(file);
+	for (int i = 0; i < pages.size(); i++)
+	{
+		std::string name = "page" + std::to_string(i);
+		FILE* file2 = fopen(name.c_str(), "wb");
+		Page& page = pages[i];
+		page.writeToFile(file2);
+		fclose(file2);
+	}
+
+	std::unordered_map<std::string, int> funcDefs;
+	std::unordered_map<std::string, std::vector<int>> funcUssages;
+
+	Stack<int> pageQue;
+	pageQue.push(0);
+
+	while (pageQue.size() > 0)
+	{
+		int pageTop = ftell(file);
+		Page* page = &pages[pageQue.top()];
+		page->writeToFile(file);
+		int ind = pageQue.top();
+		pageQue.pop();
+		funcDefs[page->name] = pageTop;
+		for (auto& [name, refs] : page->funUssages)
+		{
+			if (name[name.size() - 2] == ':')
+			{
+				if (funcDefs.find(name) == funcDefs.end())
+				{
+					pageQue.push(funcPageIndex[name]);
+				}
+			}
+			funcUssages[name].push_back(pageTop + refs);
+		}
+	}
+
+	fputc(0, file);
 
 	long long pos = currentPage->i;
 
 	std::vector<std::string> funcVec;
-	for (auto& [funcName, refs] : funcs)
+	for (auto& [funcName, refs] : funcUssages)
 	{
 		bool refFound = false;
 		long long funcAddr = 0;
-		for (FunctionMarker marker : refs)
+		if (funcDefs.find(funcName) != funcDefs.end())
 		{
-			if (marker.type == FunctionMarkerType::Definition)
-			{
-				funcAddr = marker.pos;
-				refFound = true;
-				break;
-			}
+			funcAddr = funcDefs[funcName];
+			refFound = true;
 		}
 		if (refFound)
 		{
-			for (FunctionMarker marker : refs)
+			for (int addr : refs)
 			{
-				if (marker.type == FunctionMarkerType::Usage)
-				{
-					long long addrl = marker.pos;
-					fsetpos(file, &addrl);
-					fputc(funcAddr, file);
-				}
+				long long addrl = addr;
+				fsetpos(file, &addrl);
+				fputc(funcAddr, file);
 			}
 			continue;
 		}
@@ -346,14 +367,11 @@ int main(int argc, const char** argv)
 			{
 				char id = funcIndex++;
 				funcVec.push_back(funcName + " " + libName);
-				for (FunctionMarker addr : refs)
+				for (int addr : refs)
 				{
-					if (addr.type == FunctionMarkerType::Usage)
-					{
-						long long addrl = addr.pos;
-						fsetpos(file, &addrl);
-						fputc(id, file);
-					}
+					long long addrl = addr;
+					fsetpos(file, &addrl);
+					fputc(id, file);
 				}
 			}
 			else

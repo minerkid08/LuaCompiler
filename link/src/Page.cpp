@@ -56,7 +56,7 @@ void Page::writeToken(const Token& t, Stack<std::string>& globalVars, Stack<std:
 		writeChar(1);
 		int j = -1;
 		int num = readInt(j, t.data.c_str());
-		writeChar(num);
+		writeInt(num);
 	}
 	else if (t.type == TokenType::Operator)
 	{

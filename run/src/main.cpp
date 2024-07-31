@@ -223,10 +223,12 @@ int main(int argc, const char** argv)
 			if (type == 2)
 			{
 				vars[id] = parseExpr();
+				std::cout << "set var " << +id << ", " << vars[id].data << '\n';
 			}
 			else
 			{
 				localVars[id + varOffsets.top()] = parseExpr();
+				std::cout << "set var " << +id << ", " << localVars[id].data << '\n';
 			}
 		}
 		else if (c == 9)
@@ -249,9 +251,16 @@ int main(int argc, const char** argv)
 			char type = input.consume();
 			unsigned char id = input.consume();
 			if (type == 2)
-				vars[id] = parseExpr();
+			{
+				if (vars[id].type == VarType::Number)
+					vars[id] = parseExpr();
+				else
+					*((int*)vars[id].data) = parseExpr().geti();
+			}
+			else if (localVars[id].type == VarType::Number)
+				localVars[id] = parseExpr();
 			else
-				localVars[id + varOffsets.top()] = parseExpr();
+				*((int*)localVars[id].data) = parseExpr().geti();
 		}
 		else if (c == 5)
 		{
