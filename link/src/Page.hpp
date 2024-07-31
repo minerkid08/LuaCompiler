@@ -11,10 +11,17 @@ struct Function
 	int pos;
 };
 
+struct Pointer
+{
+	int addr;
+	int targetAddr;
+};
+
 struct Page
 {
-  std::string name;
+	std::string name;
 	std::vector<Function> funUssages;
+	std::vector<Pointer> pointers;
 	int i = 0;
 	char buf[512];
 	void writeToFile(FILE* file);
