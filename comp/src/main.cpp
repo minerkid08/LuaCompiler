@@ -333,6 +333,8 @@ void parseFunction(StreamVec<Token>& tokens)
 		writeString(name, file);
 
 		blockVarPop.push(vars.size());
+		for (const std::string& arg : args)
+			vars.push(arg);
 	}
 	else
 		err("end or newline expected after function declaration");
