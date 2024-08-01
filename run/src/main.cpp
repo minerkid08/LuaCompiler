@@ -1,6 +1,3 @@
-#include "Variable.hpp"
-#include "dlfcn.hpp"
-#include <iostream>
 #include <sstream>
 #include <vector>
 
@@ -8,6 +5,8 @@
 #include "Stack.hpp"
 #include "Stream.hpp"
 #include "Utils.hpp"
+#include "Variable.hpp"
+#include "dlfcn.hpp"
 
 Variable vars[32];
 Variable localVars[32];
@@ -134,8 +133,8 @@ Variable parseExpr(Token v = {Ttype_Nil, 0})
 				char operation = var.geti();
 				const Variable& a = tempStack[tempStack.size() - 2];
 				const Variable& b = tempStack.top();
-				int avalue = a.geti();
-				int bvalue = b.geti();
+				int avalue = a.toInt();
+				int bvalue = b.toInt();
 				int out;
 				if (operation == '+')
 					out = avalue + bvalue;
@@ -223,12 +222,10 @@ int main(int argc, const char** argv)
 			if (type == 2)
 			{
 				vars[id] = parseExpr();
-				std::cout << "set var " << +id << ", " << vars[id].data << '\n';
 			}
 			else
 			{
 				localVars[id + varOffsets.top()] = parseExpr();
-				std::cout << "set var " << +id << ", " << localVars[id].data << '\n';
 			}
 		}
 		else if (c == 9)
@@ -265,7 +262,8 @@ int main(int argc, const char** argv)
 		else if (c == 5)
 		{
 			int newI = readInt(input.i, input.getPtr());
-			if (parseExpr().toInt() == 0)
+			int e = parseExpr().toInt();
+			if (e == 0)
 			{
 				input.i = newI - 1;
 			}

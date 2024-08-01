@@ -231,27 +231,22 @@ int main(int argc, const char** argv)
 				{
 					vars->popTo(varInds->top());
 					varInds->pop();
-					long long j = elem.pos;
-					long long currentPos = currentPage->i;
-					currentPage->i = j;
-					currentPage->writeInt(currentPos);
-					currentPage->i = currentPos;
+					currentPage->pointers.push_back({currentPage->i, elem.pos});
 				}
 				else if (elem.type == LabelType::While)
 				{
 					vars->popTo(varInds->top());
 					varInds->pop();
-					long long j = elem.pos;
-					long long currentPos = currentPage->i + 5;
+					int j = elem.pos;
+					int currentPos = currentPage->i + 5;
 					currentPage->writeChar(11);
-					currentPage->writeInt(j - 1);
-					currentPage->i = j;
-					currentPage->writeInt(currentPos);
+					currentPage->pointers.push_back({j - 1, currentPage->i});
+					currentPage->writeInt(0);
+					currentPage->pointers.push_back({currentPage->i, j});
 					for (int i = 0; i < loopLables.top().size(); i++)
 					{
-						long long a = loopLables.top()[i];
-						currentPage->i = a;
-						currentPage->writeInt(currentPos);
+						int a = loopLables.top()[i];
+						currentPage->pointers.push_back({currentPos, a});
 					}
 					loopLables.pop();
 					currentPage->i = currentPos;
@@ -335,11 +330,20 @@ int main(int argc, const char** argv)
 			}
 			funcUssages[name].push_back(pageTop + refs);
 		}
+		int fend = ftell(file);
+		for (Pointer& p : page->pointers)
+		{
+			long long pos = p.targetAddr + pageTop;
+			fsetpos(file, &pos);
+			writeInt(p.addr + pageTop, file);
+		}
+		long long pos = fend;
+		fsetpos(file, &pos);
 	}
 
 	fputc(0, file);
 
-	long long pos = currentPage->i;
+	long long pos = ftell(file);
 
 	std::vector<std::string> funcVec;
 	for (auto& [funcName, refs] : funcUssages)
