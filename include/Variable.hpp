@@ -30,14 +30,21 @@ struct Variable
 	inline Variable(const std::string& str)
 	{
 		type = VarType::String;
-		data = (void*)new std::string(str);
+		std::string* s = new std::string();
+		for (char c : str)
+			s->push_back(c);
+		data = (void*)s;
 	}
 	inline Variable(const Variable& v)
 	{
 		type = v.type;
 		if (v.type == VarType::String)
 		{
-			data = (void*)new std::string(v.gets());
+			std::string& s2 = *(std::string*)v.data;
+			std::string* s = new std::string();
+			for (char c : s2)
+				s->push_back(c);
+			data = (void*)s;
 		}
 		else
 		{
@@ -47,7 +54,10 @@ struct Variable
 	~Variable()
 	{
 		if (type == VarType::String)
-			delete (std::string*)data;
+		{
+			std::string* str = (std::string*)data;
+			delete str;
+		}
 	}
 	inline int geti() const
 	{
@@ -57,16 +67,16 @@ struct Variable
 	{
 		return *(std::string*)data;
 	}
-	inline Variable deref() const
+	inline Variable* deref() const
 	{
 		if (type == VarType::Ptr)
-			return *(Variable*)data;
+			return (Variable*)data;
 		return nullptr;
 	}
 	inline int toInt() const
 	{
 		if (type == VarType::Ptr)
-			return deref().geti();
+			return deref()->geti();
 		return geti();
 	}
 	inline std::string toString() const

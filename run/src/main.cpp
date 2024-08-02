@@ -37,7 +37,8 @@ struct Token
 	{
 		type = t;
 		data = "0000";
-		*(int*)(&data[0]) = i;
+		int* num = (int*)&(data[0]);
+		*num = i;
 	}
 	Token(char t, const std::string& s)
 	{
@@ -46,7 +47,8 @@ struct Token
 	}
 	int geti() const
 	{
-		return *((int*)&(data[0]));
+		int* n = (int*)&(data[0]);
+		return *n;
 	}
 };
 
@@ -164,13 +166,10 @@ Variable parseExpr(Token v = {Ttype_Nil, 0})
 					a = a.deref();
 				while (b.type == VarType::Ptr)
 					b = b.deref();
-				std::cout << (a.type == VarType::String) << ", " << (b.type == VarType::String) << '\n';
 				if (a.type == VarType::String || b.type == VarType::String)
 				{
 					std::string s1 = a.toString();
 					std::string s2 = b.toString();
-					std::cout << "a " << s1 << '\n';
-					std::cout << "b " << s2 << '\n';
 					std::string out;
 					int outi = -1;
 					if (operation == '+')
@@ -181,15 +180,20 @@ Variable parseExpr(Token v = {Ttype_Nil, 0})
 						outi = (s1 != s2);
 					tempStack.pop(2);
 					if (outi != -1)
+					{
 						tempStack.push(outi);
+					}
 					else
+					{
 						tempStack.push(out);
+					}
 				}
 				else
 				{
 					int avalue = a.toInt();
 					int bvalue = b.toInt();
 					int out;
+
 					if (operation == '+')
 						out = avalue + bvalue;
 					else if (operation == '-')
@@ -208,7 +212,7 @@ Variable parseExpr(Token v = {Ttype_Nil, 0})
 				}
 			}
 		}
-		return tempStack.top().geti();
+		return tempStack.top();
 	}
 	return 0;
 }
@@ -216,8 +220,11 @@ Variable parseExpr(Token v = {Ttype_Nil, 0})
 int main(int argc, const char** argv)
 {
 	varOffsets.push(0);
-
-	FILE* file = fopen(argv[1], "rb");
+	FILE* file;
+	if (argc == 1)
+		file = fopen("bin\\main.o", "rb");
+	else
+		file = fopen(argv[1], "rb");
 	fseek(file, 0, SEEK_END);
 	int size = ftell(file);
 	rewind(file);
@@ -302,17 +309,20 @@ int main(int argc, const char** argv)
 		{
 			char type = input.consume();
 			unsigned char id = input.consume();
+			Variable* var;
 			if (type == 2)
 			{
-				if (vars[id].type == VarType::Number)
-					vars[id] = parseExpr();
-				else
-					*((int*)vars[id].data) = parseExpr().geti();
+				var = &(vars[id]);
 			}
-			else if (localVars[id].type == VarType::Number)
-				localVars[id] = parseExpr();
 			else
-				*((int*)localVars[id].data) = parseExpr().geti();
+			{
+				var = &(localVars[id + varOffsets.top()]);
+			}
+			while (var->type == VarType::Ptr)
+			{
+				var = var->deref();
+			}
+			*var = parseExpr();
 		}
 		else if (c == 5)
 		{
