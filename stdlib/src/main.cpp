@@ -9,11 +9,11 @@ extern "C"
 {
 	void EXPORT print(const std::vector<Variable>& vars)
 	{
-		std::cout << vars[0].toInt();
+		std::cout << vars[0].toString();
 	}
 	void EXPORT println(const std::vector<Variable>& vars)
 	{
-		std::cout << vars[0].toInt() << '\n';
+		std::cout << vars[0].toString() << '\n';
 	}
 	void EXPORT exit2(const std::vector<Variable>& vars)
 	{
@@ -23,7 +23,8 @@ extern "C"
 	{
 		std::string s;
 		std::cin >> s;
-		int i = std::stoi(s);
-		*((int*)vars[0].data) = i;
+		long long i = std::stoi(s);
+		Variable* v = (Variable*)(vars[0].data);
+		v->data = (void*)i;
 	}
 }

@@ -1,3 +1,4 @@
+#include <iostream>
 #include <sstream>
 #include <vector>
 
@@ -23,14 +24,30 @@ std::string intToHex(int i)
 #define Ttype_lRef 3
 #define Ttype_gRef 4
 #define Ttype_Num 5
-#define Ttype_Opr 6
-#define Ttype_Expr 7
-#define Ttype_Nil 8
+#define Ttype_Str 6
+#define Ttype_Opr 7
+#define Ttype_Expr 8
+#define Ttype_Nil 9
 
 struct Token
 {
 	char type;
-	int data;
+	std::string data;
+	Token(char t, int i)
+	{
+		type = t;
+		data = "0000";
+		*(int*)(&data[0]) = i;
+	}
+	Token(char t, const std::string& s)
+	{
+		type = t;
+		data = s;
+	}
+	int geti() const
+	{
+		return *((int*)&(data[0]));
+	}
 };
 
 Stack<int> callStack;
@@ -76,6 +93,11 @@ inline Token readToken()
 		char id = input.consume();
 		return {Ttype_lRef, id};
 	}
+	if (type == 7)
+	{
+		std::string str = readString(input);
+		return {Ttype_Str, str};
+	}
 	return {Ttype_Nil, 0};
 }
 
@@ -85,23 +107,28 @@ Variable parseExpr(Token v = {Ttype_Nil, 0})
 		v = readToken();
 	if (v.type == Ttype_lRef)
 	{
-		return (Variable*)&(localVars[v.data + varOffsets.top()].data);
+		return &(localVars[v.geti() + varOffsets.top()]);
 	}
 	if (v.type == Ttype_gRef)
 	{
-		return (Variable*)&(vars[v.data].data);
+		return &(vars[v.geti()]);
 	}
 	if (v.type == Ttype_Num)
 	{
-		return v.data;
+		int n = v.geti();
+		return n;
 	}
 	if (v.type == Ttype_gVar)
 	{
-		return vars[v.data].geti();
+		return vars[v.geti()];
 	}
 	if (v.type == Ttype_lVar)
 	{
-		return localVars[v.data].geti();
+		return localVars[v.geti() + varOffsets.top()];
+	}
+	if (v.type == Ttype_Str)
+	{
+		return v.data;
 	}
 	if (v.type == Ttype_Expr)
 	{
@@ -110,7 +137,7 @@ Variable parseExpr(Token v = {Ttype_Nil, 0})
 		{
 			Token v = readToken();
 			if (v.type == Ttype_Opr)
-				vars2.push_back({v.data, VarType::Opration});
+				vars2.push_back({v.geti(), VarType::Opration});
 			else
 				vars2.push_back(parseExpr(v));
 			if ((unsigned char)input.get(1) == 255)
@@ -124,33 +151,61 @@ Variable parseExpr(Token v = {Ttype_Nil, 0})
 		for (int i = 0; i < s2; i++)
 		{
 			Variable& var = vars2[i];
-			if (var.type == VarType::Number)
+			if (var.type == VarType::Number || var.type == VarType::String)
 			{
 				tempStack.push(var);
 			}
 			else
 			{
 				char operation = var.geti();
-				const Variable& a = tempStack[tempStack.size() - 2];
-				const Variable& b = tempStack.top();
-				int avalue = a.toInt();
-				int bvalue = b.toInt();
-				int out;
-				if (operation == '+')
-					out = avalue + bvalue;
-				else if (operation == '-')
-					out = avalue - bvalue;
-				else if (operation == '*')
-					out = avalue * bvalue;
-				else if (operation == '/')
-					out = avalue / bvalue;
-				else if (operation == 1)
-					out = avalue == bvalue;
-				else if (operation == 2)
-					out = avalue != bvalue;
+				Variable a = tempStack[tempStack.size() - 2];
+				Variable b = tempStack.top();
+				while (a.type == VarType::Ptr)
+					a = a.deref();
+				while (b.type == VarType::Ptr)
+					b = b.deref();
+				std::cout << (a.type == VarType::String) << ", " << (b.type == VarType::String) << '\n';
+				if (a.type == VarType::String || b.type == VarType::String)
+				{
+					std::string s1 = a.toString();
+					std::string s2 = b.toString();
+					std::cout << "a " << s1 << '\n';
+					std::cout << "b " << s2 << '\n';
+					std::string out;
+					int outi = -1;
+					if (operation == '+')
+						out = s1 + s2;
+					else if (operation == 1)
+						outi = (s1 == s2);
+					else if (operation == 2)
+						outi = (s1 != s2);
+					tempStack.pop(2);
+					if (outi != -1)
+						tempStack.push(outi);
+					else
+						tempStack.push(out);
+				}
+				else
+				{
+					int avalue = a.toInt();
+					int bvalue = b.toInt();
+					int out;
+					if (operation == '+')
+						out = avalue + bvalue;
+					else if (operation == '-')
+						out = avalue - bvalue;
+					else if (operation == '*')
+						out = avalue * bvalue;
+					else if (operation == '/')
+						out = avalue / bvalue;
+					else if (operation == 1)
+						out = avalue == bvalue;
+					else if (operation == 2)
+						out = avalue != bvalue;
 
-				tempStack.pop(2);
-				tempStack.push(out);
+					tempStack.pop(2);
+					tempStack.push(out);
+				}
 			}
 		}
 		return tempStack.top().geti();

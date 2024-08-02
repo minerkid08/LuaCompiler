@@ -33,6 +33,10 @@ Token readToken(Stream<char>& data)
 		c[1] = '\0';
 		return {TokenType::Operator, c};
 	}
+	else if (type == 4)
+	{
+		return {TokenType::String, readString(data)};
+	}
 	else if (type == 5)
 	{
 		std::string c = readString(data);
