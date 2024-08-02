@@ -372,5 +372,10 @@ int main(int argc, const char** argv)
 			int addr = readInt(input);
 			input.i = addr - 1;
 		}
+		else if (c == 13)
+		{
+			int addr = readInt(input);
+			input.i = addr - 1;
+		}
 	}
 }

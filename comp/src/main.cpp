@@ -121,6 +121,12 @@ void parseFile(const char* filename)
 			{
 				fputc(9, file);
 			}
+			else if (*token == "else")
+			{
+				fputc(10, file);
+				int ts = blockVarPop.top();
+				vars.popTo(ts);
+			}
 			else if (*token == "local")
 			{
 				const Token* token2 = tokens.consume();

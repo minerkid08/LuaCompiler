@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 
+#include "Utils.hpp"
 #include "Variable.hpp"
 
 #define EXPORT __declspec(dllexport)
@@ -23,8 +24,46 @@ extern "C"
 	{
 		std::string s;
 		std::cin >> s;
-		long long i = std::stoi(s);
-		Variable* v = (Variable*)(vars[0].data);
-		v->data = (void*)i;
+		bool num = true;
+		for (char c : s)
+		{
+			if ((c < '0' || c > '9') && c != '.')
+			{
+				num = false;
+				break;
+			}
+		}
+		if (num)
+		{
+			Variable* v = (Variable*)(vars[0].data);
+			int i = std::stoi(s);
+			*v = i;
+		}
+		else
+		{
+			Variable* v = (Variable*)(vars[0].data);
+			*v = Variable(s);
+		}
+	}
+	void EXPORT type(const std::vector<Variable>& vars)
+	{
+		if (vars.size() != 2)
+		{
+			err("type requires 2 params, got " + std::to_string(vars.size()));
+		}
+		const Variable& v = vars[0];
+		Variable* v2 = (Variable*)(vars[1].data);
+		if (v.type == VarType::Number)
+		{
+			*v2 = Variable("number");
+		}
+		else if (v.type == VarType::String)
+		{
+			*v2 = Variable("string");
+		}
+		else if (v.type == VarType::Ptr)
+		{
+			*v2 = Variable("ptr");
+		}
 	}
 }
