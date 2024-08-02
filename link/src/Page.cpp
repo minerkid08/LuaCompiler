@@ -3,15 +3,22 @@
 
 void Page::writeToFile(FILE* file)
 {
-  for(int j = 0; j < i; j++)
-  {
-    fputc(buf[j], file);
-  }
+	for (int j = 0; j < i; j++)
+	{
+		fputc(buf[j], file);
+	}
 }
 
 void Page::writeChar(unsigned char c)
 {
-  buf[i++] = c;
+	buf[i++] = c;
+}
+
+void Page::writeString(const std::string& s)
+{
+	for (char c : s)
+		buf[i++] = c;
+	buf[i++] = 0;
 }
 
 void Page::writeInt(int n)
@@ -89,5 +96,10 @@ void Page::writeToken(const Token& t, Stack<std::string>& globalVars, Stack<std:
 				}
 			}
 		}
+	}
+	else if (t.type == TokenType::String)
+	{
+		writeChar(7);
+		writeString(t.data);
 	}
 }

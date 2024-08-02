@@ -1,8 +1,10 @@
 #pragma once
+#include <string>
 
 enum class VarType
 {
 	Number,
+	String,
 	Ptr,
 	Opration
 };
@@ -25,21 +27,63 @@ struct Variable
 		type = VarType::Ptr;
 		data = (void*)n;
 	}
+	inline Variable(const std::string& str)
+	{
+		type = VarType::String;
+		std::string* s = new std::string();
+		for (char c : str)
+			s->push_back(c);
+		data = (void*)s;
+	}
+	inline Variable(const Variable& v)
+	{
+		type = v.type;
+		if (v.type == VarType::String)
+		{
+			std::string& s2 = *(std::string*)v.data;
+			std::string* s = new std::string();
+			for (char c : s2)
+				s->push_back(c);
+			data = (void*)s;
+		}
+		else
+		{
+			data = v.data;
+		}
+	}
+	~Variable()
+	{
+		if (type == VarType::String)
+		{
+			std::string* str = (std::string*)data;
+			delete str;
+		}
+	}
 	inline int geti() const
 	{
-		long long d = (long long)data;
-		return (int)d;
+		return (int)(long long)data;
 	}
-	inline Variable deref() const
+	inline std::string& gets() const
+	{
+		return *(std::string*)data;
+	}
+	inline Variable* deref() const
 	{
 		if (type == VarType::Ptr)
-			return *(Variable*)data;
-		return geti();
+			return (Variable*)data;
+		return nullptr;
 	}
 	inline int toInt() const
 	{
 		if (type == VarType::Ptr)
-			return deref().geti();
+			return deref()->geti();
 		return geti();
+	}
+	inline std::string toString() const
+	{
+		if (type == VarType::String)
+			return *((std::string*)data);
+		else
+			return std::to_string((long long)data);
 	}
 };

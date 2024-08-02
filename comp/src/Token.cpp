@@ -40,8 +40,7 @@ void writeToken(const Token& token, FILE* file)
 	if (token.type == TokenType::Text)
 	{
 		fputc(0, file);
-		fputs(token.data.c_str(), file);
-		fputc(0, file);
+		writeString(token.data, file);
 	}
 	else if (token.type == TokenType::Number)
 	{
@@ -52,6 +51,12 @@ void writeToken(const Token& token, FILE* file)
 	{
 		fputc(3, file);
 		fputc(token.data[0], file);
+	}
+	else if (token.type == TokenType::String)
+	{
+		fputc(4, file);
+		std::string name = token.data.substr(1, token.data.size() - 2);
+		writeString(name, file);
 	}
 }
 

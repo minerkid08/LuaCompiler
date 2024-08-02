@@ -26,6 +26,7 @@ struct Page
 	char buf[512];
 	void writeToFile(FILE* file);
 	void writeChar(unsigned char c);
+	void writeString(const std::string& s);
 	void writeInt(int i);
 	void writeToken(const Token& t, Stack<std::string>& globalVars, Stack<std::string>& localVars);
 };

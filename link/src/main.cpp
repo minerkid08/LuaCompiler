@@ -68,7 +68,7 @@ void parseExpr(Stream<char>& input)
 		currentPage->writeChar(255);
 		return;
 	}
-	if (id == 1 || id == 0 || id == 3 || id == 5)
+	if (id == 1 || id == 0 || id == 3 || id == 4 || id == 5)
 	{
 		Token t = readToken(input);
 		currentPage->writeToken(t, globalVars, localVars);

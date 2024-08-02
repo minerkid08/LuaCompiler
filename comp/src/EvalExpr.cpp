@@ -60,7 +60,8 @@ void parseExpression(int size, std::vector<std::vector<Token*>>* parsedTokenMap,
 		Stack<Token*> tempStack;
 		for (Token* token : tokenList)
 		{
-			if (*token == TokenType::Number || *token == TokenType::Text || *token == TokenType::NestingHelper)
+			if (*token == TokenType::Number || *token == TokenType::Text || *token == TokenType::NestingHelper ||
+				*token == TokenType::String)
 			{
 				outputStack.push(token);
 			}
