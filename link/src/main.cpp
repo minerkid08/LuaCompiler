@@ -293,6 +293,16 @@ int main(int argc, const char** argv)
 				loopLables.top().push_back(currentPage->i);
 				currentPage->writeInt(0);
 			}
+			else if (c == 10)
+			{
+				LabelElement elem = labels.top();
+				currentPage->writeChar(13);
+				vars->popTo(varInds->top());
+				currentPage->pointers.push_back({currentPage->i + 4, elem.pos});
+				labels.pop();
+				labels.push({LabelType::If, currentPage->i});
+				currentPage->writeInt(0);
+			}
 		}
 	}
 

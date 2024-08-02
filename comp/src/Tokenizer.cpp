@@ -7,6 +7,7 @@ std::vector<std::string> keywords = {
   "function",
   "end",
   "if",
+  "else",
   "then",
   "do",
   "local",
