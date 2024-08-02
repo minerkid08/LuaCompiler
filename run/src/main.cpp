@@ -85,11 +85,11 @@ Variable parseExpr(Token v = {Ttype_Nil, 0})
 		v = readToken();
 	if (v.type == Ttype_lRef)
 	{
-		return (int*)&(localVars[v.data + varOffsets.top()].data);
+		return (Variable*)&(localVars[v.data + varOffsets.top()].data);
 	}
 	if (v.type == Ttype_gRef)
 	{
-		return (int*)&(vars[v.data].data);
+		return (Variable*)&(vars[v.data].data);
 	}
 	if (v.type == Ttype_Num)
 	{
