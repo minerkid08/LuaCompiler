@@ -36,7 +36,7 @@
 			"include": ["include"],
 			"type": "dll",
 			"out": "..\\stdlib.dll",
-			dll": [],
+			"dll": [],
 			"sdll": [],
 			"configs": ["build"]
 		}
