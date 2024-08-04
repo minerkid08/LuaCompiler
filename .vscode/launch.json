@@ -129,7 +129,7 @@
             "externalConsole": false,
             "name": "stdlib: build",
             "preLaunchTask": "stdlib",
-            "program": "${workspaceFolder}/bin/..\\stdlib.dll",
+            "program": "${workspaceFolder}/bin/stdlib.dll",
             "request": "launch",
             "setupCommands": [
                 {

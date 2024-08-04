@@ -81,7 +81,7 @@
                 "include",
                 "-shared",
                 "-o",
-                "${workspaceFolder}\\bin\\..\\stdlib.dll",
+                "${workspaceFolder}\\bin\\stdlib.dll",
                 "-I${workspaceFolder}\\include",
                 "-I${workspaceFolder}\\stdlib\\src",
                 "-L${workspaceFolder}\\bin\\"
