@@ -1,3 +1,4 @@
+#include <filesystem>
 #include <vector>
 
 #include "EvalExpr.hpp"
@@ -9,6 +10,8 @@
 #include "Utils.hpp"
 
 #include <iostream>
+
+std::vector<std::string> includePaths;
 
 FILE* file = nullptr;
 
@@ -156,8 +159,23 @@ void parseFile(const char* filename)
 					err("expected string after require(");
 				std::string name = token2->data;
 				name = name.substr(1, name.size() - 2);
-				parseFile(name.c_str());
-				tokens.consume(2);
+				if (std::filesystem::exists(name))
+				{
+					parseFile(name.c_str());
+					tokens.consume(2);
+				}
+				else
+				{
+					for (const std::string& str : includePaths)
+					{
+						if (std::filesystem::exists(str + '\\' + name))
+						{
+							parseFile((str + '\\' + name).c_str());
+							tokens.consume(2);
+							break;
+						}
+					}
+				}
 			}
 		}
 		else if (*token == TokenType::Text)
@@ -353,6 +371,15 @@ int main(int argc, const char** argv)
 
 	file = fopen(argv[1], "wb");
 	for (int i = 2; i < argc; i++)
-		parseFile(argv[i]);
+	{
+		if (argv[i][0] == '-' && argv[i][1] == 'i')
+		{
+			std::string path = argv[i];
+			path = path.substr(2);
+			includePaths.push_back(path);
+		}
+		else
+			parseFile(argv[i]);
+	}
 	fclose(file);
 }

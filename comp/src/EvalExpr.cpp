@@ -16,6 +16,8 @@ int getPriority(const Token& t)
 		return 0;
 	if (t.data == "\2")
 		return 0;
+	if (t.data == "\3")
+		return 99;
 	return -1;
 }
 
@@ -44,7 +46,22 @@ void parseExpression(int size, std::vector<std::vector<Token*>>* parsedTokenMap,
 			nestingMap.push_back({});
 			currentVec = &nestingMap[mapIndex];
 		}
-		else if (*token == TokenType::CloseParan)
+		if (*token == TokenType::OpenSqBk)
+		{
+			Token* t = new Token();
+			t->type = TokenType::Operator;
+      t->data = "\3";
+			currentVec->push_back(t);
+			nestingStack.push(mapIndex);
+			mapIndex = nestingMap.size();
+			t = new Token();
+			t->type = TokenType::NestingHelper;
+			t->data = std::to_string(mapIndex);
+			currentVec->push_back(t);
+			nestingMap.push_back({});
+			currentVec = &nestingMap[mapIndex];
+		}
+		else if (*token == TokenType::CloseParan || *token == TokenType::CloseSqBk)
 		{
 			mapIndex = nestingStack.top();
 			nestingStack.pop(1);
