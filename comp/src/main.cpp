@@ -177,6 +177,10 @@ void parseFile(const char* filename)
 					}
 				}
 			}
+			else if (*token == "return")
+			{
+				fputc(11, file);
+			}
 		}
 		else if (*token == TokenType::Text)
 		{

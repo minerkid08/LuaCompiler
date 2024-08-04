@@ -110,11 +110,11 @@ int main(int argc, const char** argv)
 	{
 		if (argv[l][0] == '-' && argv[l][1] == 'l')
 		{
-      std::string name = argv[l];
-      name = name.substr(2);
+			std::string name = argv[l];
+			name = name.substr(2);
 			libs[name] = {};
 			getDllFunctions(name + ".dll", libs[name]);
-      continue;
+			continue;
 		}
 
 		Stream<char> input;
@@ -311,6 +311,10 @@ int main(int argc, const char** argv)
 				labels.pop();
 				labels.push({LabelType::If, currentPage->i});
 				currentPage->writeInt(0);
+			}
+			else if (c == 11)
+			{
+				currentPage->writeChar(8);
 			}
 		}
 	}
