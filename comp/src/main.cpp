@@ -373,6 +373,11 @@ int main(int argc, const char** argv)
 	if (argc < 3)
 		err("compiler requires 2 args (out file, in file(s))");
 
+	std::string exePath = argv[0];
+	exePath = exePath.substr(0, exePath.find_last_of('\\'));
+
+	includePaths.push_back(exePath);
+
 	file = fopen(argv[1], "wb");
 	for (int i = 2; i < argc; i++)
 	{

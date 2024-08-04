@@ -104,6 +104,12 @@ int main(int argc, const char** argv)
 
 	std::unordered_map<std::string, std::vector<std::string>> libs;
 
+	std::string stdlibName= argv[0];
+	stdlibName = stdlibName.substr(0, stdlibName.find_last_of('\\')) + "\\stdlib";
+
+	libs[stdlibName] = {};
+	getDllFunctions(stdlibName + ".dll", libs[stdlibName]);
+
 	currentPage->name = "main";
 
 	for (int l = 2; l < argc; l++)
