@@ -14,7 +14,6 @@ while 1 do
     if opr == 0 then
       break
     end
-    println("opr is " + opr)
     cin(ref a)
     cin(ref b)
     local out = 0

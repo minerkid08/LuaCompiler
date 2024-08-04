@@ -5,6 +5,7 @@ static std::vector<Token>* tokens = nullptr;
 
 std::vector<std::string> keywords = {
   "function",
+  "return",
   "end",
   "if",
   "else",
