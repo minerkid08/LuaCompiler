@@ -13,6 +13,10 @@ const char* typeToStr(TokenType type)
 		return "closeParan";
 	case TokenType::OpenParan:
 		return "openParan";
+	case TokenType::OpenSqBk:
+		return "openSqBk";
+	case TokenType::CloseSqBk:
+		return "closeSqBk";
 	case TokenType::Text:
 		return "text";
 	case TokenType::Keyword:

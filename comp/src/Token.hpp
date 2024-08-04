@@ -7,6 +7,8 @@ enum class TokenType
 	Text,
 	OpenParan,
 	CloseParan,
+  OpenSqBk,
+  CloseSqBk,
 	Keyword,
 	Number,
 	String,

@@ -28,6 +28,8 @@ enum class FunctionMarkerType
 	Usage
 };
 
+std::vector<std::string> libFiles;
+
 std::vector<Page> pages = {{}};
 
 std::unordered_map<std::string, int> funcPageIndex;
@@ -101,13 +103,20 @@ int main(int argc, const char** argv)
 	currentPage->writeInt(0);
 
 	std::unordered_map<std::string, std::vector<std::string>> libs;
-	libs["stdlib"] = {};
-	getDllFunctions("stdlib.dll", libs["stdlib"]);
 
 	currentPage->name = "main";
 
 	for (int l = 2; l < argc; l++)
 	{
+		if (argv[l][0] == '-' && argv[l][1] == 'l')
+		{
+      std::string name = argv[l];
+      name = name.substr(2);
+			libs[name] = {};
+			getDllFunctions(name + ".dll", libs[name]);
+      continue;
+		}
+
 		Stream<char> input;
 		FILE* inFile = fopen(argv[l], "rb");
 		fseek(inFile, 0, SEEK_END);
@@ -304,15 +313,6 @@ int main(int argc, const char** argv)
 				currentPage->writeInt(0);
 			}
 		}
-	}
-
-	for (int i = 0; i < pages.size(); i++)
-	{
-		std::string name = "page" + std::to_string(i);
-		FILE* file2 = fopen(name.c_str(), "wb");
-		Page& page = pages[i];
-		page.writeToFile(file2);
-		fclose(file2);
 	}
 
 	std::unordered_map<std::string, int> funcDefs;
