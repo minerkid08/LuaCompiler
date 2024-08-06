@@ -52,18 +52,20 @@ extern "C"
 			err("type requires 2 params, got " + std::to_string(vars.size()));
 		}
 		const Variable& v = vars[0];
-		Variable* v2 = (Variable*)(vars[1].data);
-		if (v.type == VarType::Number)
+		Variable* v2 = vars[1].deref();
+		switch (v.type)
 		{
+		case VarType::Number:
 			*v2 = Variable("number");
-		}
-		else if (v.type == VarType::String)
-		{
+			break;
+		case VarType::String:
 			*v2 = Variable("string");
-		}
-		else if (v.type == VarType::Ptr)
-		{
+			break;
+		case VarType::Ptr:
 			*v2 = Variable("ptr");
+			break;
+		case VarType::Opration:
+			break;
 		}
 	}
 }
