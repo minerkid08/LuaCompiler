@@ -1,4 +1,3 @@
-#include <iostream>
 #include <sstream>
 #include <vector>
 
@@ -61,7 +60,6 @@ typedef void (*NativeFunc)(const std::vector<Variable>& vars);
 inline Token readToken()
 {
 	unsigned char type = input.consume();
-	std::cout << "read " << +type << '\n';
 	if (type == 0)
 	{
 		char id = input.consume();
@@ -108,7 +106,6 @@ Variable parseExpr(Token v = {Ttype_Nil, 0})
 {
 	if (v.type == Ttype_Nil)
 		v = readToken();
-	std::cout << +v.type << '\n';
 	if (v.type == Ttype_lRef)
 	{
 		return &(localVars[v.geti() + varOffsets.top()]);
@@ -124,7 +121,6 @@ Variable parseExpr(Token v = {Ttype_Nil, 0})
 	}
 	if (v.type == Ttype_gVar)
 	{
-		std::cout << v.geti() << "e\n";
 		return vars[v.geti()];
 	}
 	if (v.type == Ttype_lVar)
@@ -141,14 +137,12 @@ Variable parseExpr(Token v = {Ttype_Nil, 0})
 		while (true)
 		{
 			Token v = readToken();
-			std::cout << "expr " << +v.type << '\n';
 			if (v.type == Ttype_Opr)
 				vars2.push_back({v.geti(), VarType::Opration});
 			else
 				vars2.push_back(parseExpr(v));
 			if ((unsigned char)input.get(1) == 255)
 			{
-				std::cout << "endexpr\n";
 				input.consume();
 				break;
 			}
