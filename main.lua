@@ -8,7 +8,7 @@ while 1 do
   cin(ref opr)
   local type = 0
   type(opr, ref type)
-  if(type == "string") then
+  if type == "string" then
     println("opr must be a number")
   else
     if opr == 0 then
