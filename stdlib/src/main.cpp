@@ -33,16 +33,14 @@ extern "C"
 				break;
 			}
 		}
+		Variable* v = vars[0].deref();
 		if (num)
 		{
-			Variable* v = (Variable*)(vars[0].data);
-			int i = std::stoi(s);
-			*v = i;
+			v->resign(std::stoi(s));
 		}
 		else
 		{
-			Variable* v = (Variable*)(vars[0].data);
-			*v = Variable(s);
+			v->resign(s);
 		}
 	}
 	void EXPORT type(const std::vector<Variable>& vars)
@@ -56,13 +54,13 @@ extern "C"
 		switch (v.type)
 		{
 		case VarType::Number:
-			*v2 = Variable("number");
+			v2->resign("number");
 			break;
 		case VarType::String:
-			*v2 = Variable("string");
+			v2->resign("string");
 			break;
 		case VarType::Ptr:
-			*v2 = Variable("ptr");
+			v2->resign("ptr");
 			break;
 		case VarType::Opration:
 			break;
