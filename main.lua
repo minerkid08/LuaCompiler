@@ -1,6 +1,8 @@
 require("stdlib.lua")
 require("math.lua")
 
+println(-1)
+
 local a = 4
 local opr = 4
 local b = 4

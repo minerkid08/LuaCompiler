@@ -3,24 +3,10 @@
 
 static std::vector<Token>* tokens = nullptr;
 
-std::vector<std::string> keywords = {
-  "function",
-  "return",
-  "end",
-  "if",
-  "else",
-  "then",
-  "do",
-  "local",
-  "while",
-  "break",
-  "require",
-  "ref"
-};
+std::vector<std::string> keywords = {"function", "return", "end",	"if",	 "else",	"then",
+									 "do",		 "local",  "while", "break", "require", "ref"};
 
-std::vector<std::string> operators = {
-  "+", "-", "*", "/", "=", "!"
-};
+std::vector<std::string> operators = {"+", "-", "*", "/", "=", "!"};
 
 void addToken(std::string& str)
 {
@@ -61,6 +47,18 @@ void tokenize(const char* input, int size, std::vector<Token>* tokenPtr)
 	for (int i = 0; i < size; i++)
 	{
 		char c = input[i];
+		if (c == '-')
+		{
+			char c2 = input[i + 1];
+			if (c2 == '-')
+			{
+				i += 2;
+				while (c2 != '\n')
+				{
+					c2 = input[++i];
+				}
+			}
+		}
 		if (!inStr)
 		{
 			if (inToken)
@@ -81,6 +79,8 @@ void tokenize(const char* input, int size, std::vector<Token>* tokenPtr)
 				tokenStr += c;
 				if (!isNum(c) && !isLetter(c))
 				{
+					if (c == '-' && isNum(input[i + 1]))
+						continue;
 					if (c == '\"')
 					{
 						inStr = true;
@@ -104,5 +104,5 @@ void tokenize(const char* input, int size, std::vector<Token>* tokenPtr)
 			}
 		}
 	}
-  tokens->push_back({TokenType::Eof, "eof"});
+	tokens->push_back({TokenType::Eof, "eof"});
 }

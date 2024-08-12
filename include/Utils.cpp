@@ -19,8 +19,16 @@ bool isNum(char c)
 
 bool isNum(const std::string& string)
 {
-	for (char c : string)
+  bool hasSign = string[0] == '-';
+	for (int i = 0; i < string.size(); i++)
 	{
+    if(hasSign == true && i == 0)
+    {
+      if(string.size() == 1)
+        return false;
+      continue;
+    }
+    char c = string[i];
 		if (!isNum(c) && c != '.')
 			return false;
 	}
